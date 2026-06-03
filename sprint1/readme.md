@@ -2,8 +2,17 @@
 
 Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
 
+## Índice
+1. [Introdução](#11-introdução)
+2. [Planeamento do Sprint 1 (PMDEV)](#12-planeamento-do-sprint-1-pmdev)
+3. [Design de Arquitetura (VEVCA)](#13-design-de-arquitetura-vevca)
+4. [Real-Time Operating System (RTOS) Design and Selection (RTOPR)](#14-real-time-operating-system-rtos-design-and-selection-rtopr)
+5. [Tecnologias de Comunicação (SYOSY)](#15-tecnologias-de-comunicação-syosy)
+6. [Conclusão](#16-conclusão)
+
+
 ## 1.1. Introdução
-Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos.
+Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos no contexto da unicade curricular de IDUCE (Engenharia de Casos de Uso Focados na Indústria). Este projeto foca-se na definição da arquitetura do sistema, na escolha do Sistema Operativo de Tempo Real (RTOS) e das tecnologias de comunicação a utilizar. O objetivo é criar um sistema robusto e eficiente que permita a coordenação eficaz entre os veículos do pelotão, garantindo a segurança e a fiabilidade das operações.
 
 ## 1.2 Planeamento do Sprint 1 (PMDEV)
 
@@ -90,6 +99,8 @@ Assim, embora o QNX represente a opção tecnicamente mais segura e o AUTOSAR a 
 
 Embora o QNX Neutrino apresente a arquitetura mais robusta e segura para sistemas automóveis críticos, os benefícios adicionais não justificam o aumento substancial de custo, complexidade e requisitos computacionais para o contexto deste projeto. Por sua vez, o AUTOSAR OS oferece uma forte integração com os processos industriais automóveis, mas a sua complexidade torna-o excessivamente pesado para um protótipo académico.
 
+Outro motivo relevante para a escolha do FreeRTOS é o facto dos elementos deste grupo de trabalho terem forte interesse na aprendizagem deste OS e na sua aplicação em sistemas embebidos, o que torna a sua utilização particularmente adequada para um projeto académico como este.
+
 Desta forma, o FreeRTOS foi selecionado como a solução que melhor satisfaz os requisitos funcionais da ECU de Gestão do Pelotão, garantindo previsibilidade temporal, facilidade de desenvolvimento, reduzidos requisitos de hardware e potencial de escalabilidade futura.
 
 
@@ -125,9 +136,9 @@ O modelo de prioridades fixas do FreeRTOS é particularmente adequado porque a c
 
 
 
-## 2.5 Tecnologias de Comunicação (SYOSY)
+## 1.5 Tecnologias de Comunicação (SYOSY)
 
-## 2.6. Conclusão
+## 1.6. Conclusão
 
 O sprint 1 foi focado na definição do design de arquitetura do sistema, na escolha do RTOS a utilizar e das suas funcionalidades chave, e na escolha das tecnologias de comunicação a utilizar. O sprint 2 será focado na continuação do trabalho realizado no sprint 1.
 
