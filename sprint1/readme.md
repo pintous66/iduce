@@ -12,7 +12,7 @@ Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
 
 
 ## 1.1. Introdução
-Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos.
+Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos no contexto da unicade curricular de IDUCE (Engenharia de Casos de Uso Focados na Indústria). Este projeto foca-se na definição da arquitetura do sistema, na escolha do Sistema Operativo de Tempo Real (RTOS) e das tecnologias de comunicação a utilizar. O objetivo é criar um sistema robusto e eficiente que permita a coordenação eficaz entre os veículos do pelotão, garantindo a segurança e a fiabilidade das operações.
 
 ## 1.2 Planeamento do Sprint 1 (PMDEV)
 
