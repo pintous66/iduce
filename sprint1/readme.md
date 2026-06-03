@@ -34,37 +34,7 @@ Esta secção detalha a seleção e as diretrizes de configuração do Sistema O
 
 O objetivo é assegurar o determinismo e a fiabilidade na execução das tarefas de coordenação, manutenção preditiva e comunicação inter-veicular, isolando estas operações da ECU central de controlo do veículo (*Vehicle Control*).
 
----
-
-## 1.4.1. Decomposição do Sistema e Requisitos de Tempo Real
-
-Para selecionar o RTOS adequado, é fundamental "desmontar" as operações da ECU de gestão do pelotão e classificar a sua criticidade temporal.
-
-Ao isolar esta ECU, o foco deixa de ser a atuação física direta (travagem/direção), passando para a coordenação de dados e envio de comandos atempados para a ECU do veículo (VC) e para outros veículos do pelotão.
-
-O sistema divide-se conceptualmente em:
-
-### Hard Real-Time (Prazos Estritos)
-
-#### Gestão do Pelotão (PlatMgmt) e Comunicações (COMM)
-
-O PlatMgmt tem de manter uma visão atualizada da posição, direção, velocidade e estado dos outros membros do pelotão.
-
-A comunicação entre os membros do pelotão é crítica, uma vez que a informação flui das Comunicações para o PlatMgmt e, subsequentemente, para a ECU de Controlo do Veículo (VC).
-
-Falhar um prazo na entrega destes dados ao VC pode comprometer as decisões de curto prazo.
-
-### Soft / Firm Real-Time (Prazos Flexíveis)
-
-#### Manutenção Preditiva (PredMaint)
-
-No veículo líder, o PlatMgmt recebe e processa o estado dos vários subsistemas para prever anomalias.
-
-A monitorização de parâmetros como a pressão dos pneus e a temperatura do motor é vital a longo prazo para minimizar o tempo de inatividade, mas o processamento destes dados tolera atrasos ligeiros sem risco de colisão imediata.
-
----
-
-## 1.4.2. Avaliação Comparativa de RTOS
+## 1.4.1. Avaliação Comparativa de RTOS
 
 A seleção do sistema operativo de tempo real (RTOS) para a ECU de Gestão do Pelotão exigiu uma análise que foi além da simples disponibilidade ou facilidade de utilização. Sendo esta ECU responsável pela agregação de dados provenientes de múltiplos veículos, pela gestão das comunicações de rede e pela transmissão de informação consolidada para a ECU de controlo, o RTOS escolhido deve garantir previsibilidade temporal, fiabilidade e capacidade de evolução futura.
 
@@ -104,7 +74,7 @@ Outro motivo relevante para a escolha do FreeRTOS é o facto dos elementos deste
 Desta forma, o FreeRTOS foi selecionado como a solução que melhor satisfaz os requisitos funcionais da ECU de Gestão do Pelotão, garantindo previsibilidade temporal, facilidade de desenvolvimento, reduzidos requisitos de hardware e potencial de escalabilidade futura.
 
 
-## 1.4.3. Funcionalidades Chave do RTOS Aplicadas à Gestão do Pelotão
+## 1.4.2. Funcionalidades Chave do RTOS Aplicadas à Gestão do Pelotão
 
 Para dar resposta aos desafios de agregação de dados e gestão de rede, o sistema fará uso das seguintes mecânicas do FreeRTOS:
 
@@ -131,8 +101,6 @@ Aplicados no acesso a estruturas de dados globais, como a tabela que guarda a vi
 Este mecanismo garante que uma tarefa crítica não fica bloqueada enquanto uma tarefa de baixa prioridade atualiza o estado de manutenção de um seguidor.
 
 O modelo de prioridades fixas do FreeRTOS é particularmente adequado porque a criticidade das tarefas é conhecida à partida e não varia durante a execução do sistema.
-
----
 
 
 
