@@ -1,4 +1,4 @@
-# X. Real-Time Operating System (RTOS) Design and Selection
+# 2. Real-Time Operating System (RTOS) Design and Selection
 
 Esta secção detalha a seleção e as diretrizes de configuração do Sistema Operativo de Tempo Real (RTOS) responsável por gerir a Unidade de Controlo Eletrónico (ECU) dedicada exclusivamente à Gestão do Pelotão (*Platoon Management*).
 
@@ -6,7 +6,7 @@ O objetivo é assegurar o determinismo e a fiabilidade na execução das tarefas
 
 ---
 
-## X.1. Decomposição do Sistema e Requisitos de Tempo Real
+## 2.1. Decomposição do Sistema e Requisitos de Tempo Real
 
 Para selecionar o RTOS adequado, é fundamental "desmontar" as operações da ECU de gestão do pelotão e classificar a sua criticidade temporal.
 
@@ -34,31 +34,45 @@ A monitorização de parâmetros como a pressão dos pneus e a temperatura do mo
 
 ---
 
-## X.2. Avaliação Comparativa de RTOS
+# 2.2. Avaliação Comparativa de RTOS
 
-Na análise de um RTOS para a ECU de Gestão do Pelotão, considerámos abordagens com perfis distintos.
+A seleção do sistema operativo de tempo real (RTOS) para a ECU de Gestão do Pelotão exigiu uma análise que foi além da simples disponibilidade ou facilidade de utilização. Sendo esta ECU responsável pela agregação de dados provenientes de múltiplos veículos, pela gestão das comunicações de rede e pela transmissão de informação consolidada para a ECU de controlo, o RTOS escolhido deve garantir previsibilidade temporal, fiabilidade e capacidade de evolução futura.
 
-O AUTOSAR, por exemplo, é o standard de excelência na indústria automóvel, mas a sua complexidade e configuração estática tornam a sua adoção irrealista para a dimensão e prazos deste projeto.
+Foram analisadas três soluções representativas de diferentes abordagens ao desenvolvimento de sistemas embebidos críticos: FreeRTOS, AUTOSAR OS e QNX Neutrino.
 
-Alternativas comerciais como o QNX oferecem um excelente isolamento de falhas, mas exigem hardware mais pesado e trazem complicações de licenciamento.
+O QNX Neutrino representa, do ponto de vista técnico, a solução mais robusta entre as alternativas consideradas. A sua arquitetura baseada em microkernel permite isolar componentes críticos do sistema, reduzindo significativamente a propagação de falhas. Em caso de erro numa aplicação, o restante sistema pode continuar operacional, uma característica particularmente valorizada em sistemas automóveis de elevada criticidade. Além disso, o QNX possui certificações amplamente reconhecidas para aplicações de segurança funcional e é utilizado em diversos sistemas automóveis comerciais.
 
-A escolha acabou por recair no FreeRTOS por ser o compromisso mais lógico e prático.
+Contudo, estas vantagens têm um custo significativo. O licenciamento comercial, os requisitos de hardware superiores e a maior complexidade de desenvolvimento tornam a sua utilização pouco adequada para um projeto como estes, cujo principal objetivo é validar a arquitetura proposta.
 
-Sendo *open-source* e tendo uma curva de aprendizagem mais acessível, adapta-se perfeitamente à necessidade de prototipagem do nosso contexto académico.
+O AUTOSAR OS encontra-se no extremo oposto em termos de adoção industrial. Oferece integração com ecossistemas completos de desenvolvimento automóvel e facilita a conformidade com processos de segurança funcional. No entanto, a sua natureza fortemente configurada e estática implica uma curva de aprendizagem elevada e um esforço considerável de integração, incompatíveis com os recursos disponíveis.
 
-Em paralelo, não compromete a fiabilidade do sistema: fornece de forma rigorosa os mecanismos críticos de escalonamento preemptivo e de comunicação inter-processos (IPC) necessários para gerir o tráfego de rede e a agregação de dados do pelotão antes de os enviar para a ECU de controlo.
+Face a estas alternativas, o FreeRTOS surge como a solução de melhor compromisso entre desempenho, simplicidade e flexibilidade. Apesar de não oferecer o mesmo nível de isolamento de falhas do QNX nem a integração automóvel do AUTOSAR, disponibiliza todos os mecanismos fundamentais necessários para o sistema proposto, incluindo escalonamento preemptivo, gestão eficiente de tarefas, sincronização através de semáforos e mecanismos de comunicação inter-processos.
 
-### Comparação de RTOS
+Outro fator determinante foi a escalabilidade da plataforma. Embora a arquitetura inicial utilize um processador single-core, o FreeRTOS suporta igualmente arquiteturas multi-core através da sua variante SMP (*Symmetric Multiprocessing*), permitindo uma futura evolução do sistema sem necessidade de substituição do RTOS.
 
-| RTOS | Vantagens | Desvantagens |
-|--------|------------|---------------|
-| **FreeRTOS** | - Open-source e gratuito<br>- Suporte a escalonamento preemptivo<br>- Comunidade ativa e documentação extensa | - Menos robusto que soluções comerciais POSIX<br>- Requer configuração manual detalhada<br>- Não possui certificação automóvel nativa (ex.: ISO 26262) |
-| **AUTOSAR OS** | - Standard da indústria automóvel<br>- Suporte a múltiplas arquiteturas de rede | - Elevada complexidade de implementação<br>- Configuração estática e inflexível |
-| **QNX Neutrino** | - Excelente isolamento de falhas (Microkernel POSIX) | - Custo elevado e licenciamento complexo<br>- Exige processadores com mais recursos |
+Assim, embora o QNX represente a opção tecnicamente mais segura e o AUTOSAR a opção mais alinhada com os padrões industriais automóveis, o FreeRTOS foi considerado a escolha mais adequada para os objetivos deste projeto, oferecendo um equilíbrio favorável entre capacidade técnica, flexibilidade, custo e esforço de implementação.
 
----
+## Comparação de RTOS
 
-## X.3. Funcionalidades Chave do RTOS Aplicadas à Gestão do Pelotão
+| Critério                            | FreeRTOS                           | AUTOSAR OS    | QNX Neutrino            |
+| ----------------------------------- | ---------------------------------- | ------------- | ----------------------- |
+| **Determinismo temporal**           | Elevado                            | Muito elevado | Muito elevado           |
+| **Segurança funcional**             | Limitada (sem certificação nativa) | Muito elevada | Muito elevada           |
+| **Isolamento de falhas**            | Reduzido (kernel monolítico)       | Moderado      | Excelente (microkernel) |
+| **Suporte multicore**               | Sim (SMP)                          | Sim           | Sim                     |
+| **Complexidade de desenvolvimento** | Baixa                              | Muito elevada | Elevada                 |
+| **Requisitos de hardware**          | Muito reduzidos                    | Moderados     | Elevados                |
+| **Custos de licenciamento**         | Gratuito                           | Elevados      | Elevados                |
+
+
+## Resumo da decisão
+
+Embora o QNX Neutrino apresente a arquitetura mais robusta e segura para sistemas automóveis críticos, os benefícios adicionais não justificam o aumento substancial de custo, complexidade e requisitos computacionais para o contexto deste projeto. Por sua vez, o AUTOSAR OS oferece uma forte integração com os processos industriais automóveis, mas a sua complexidade torna-o excessivamente pesado para um protótipo académico.
+
+Desta forma, o FreeRTOS foi selecionado como a solução que melhor satisfaz os requisitos funcionais da ECU de Gestão do Pelotão, garantindo previsibilidade temporal, facilidade de desenvolvimento, reduzidos requisitos de hardware e potencial de escalabilidade futura.
+
+
+## 2.3. Funcionalidades Chave do RTOS Aplicadas à Gestão do Pelotão
 
 Para dar resposta aos desafios de agregação de dados e gestão de rede, o sistema fará uso das seguintes mecânicas do FreeRTOS:
 
@@ -84,44 +98,7 @@ Aplicados no acesso a estruturas de dados globais, como a tabela que guarda a vi
 
 Este mecanismo garante que uma tarefa crítica não fica bloqueada enquanto uma tarefa de baixa prioridade atualiza o estado de manutenção de um seguidor.
 
+O modelo de prioridades fixas do FreeRTOS é particularmente adequado porque a criticidade das tarefas é conhecida à partida e não varia durante a execução do sistema.
+
 ---
-
-## X.4. Diretrizes para o Mapeamento do Taskset
-
-### Distribuição de Tarefas
-
-Identificação das tarefas independentes a instanciar no FreeRTOS dentro desta ECU específica, nomeadamente:
-
-- Processos associados ao PlatMgmt;
-- Processos de COMM.
-
-### Parâmetros Temporais
-
-Definição teórica dos seguintes parâmetros para cada tarefa:
-
-- **Período ($T$)**
-- **Tempo de Execução ($C$)**
-- **Prazo ($D$)**
-
-O planeamento deve assegurar que o processamento do PlatMgmt seja suficientemente rápido para alimentar a ECU do VC, cujo ciclo de decisão varia entre **0,1 s e 5 s**, e lidar com as taxas de receção de informação provenientes de outros veículos e infraestruturas.
-
-Baseado nestas informações, o taskset pode ser configurado para garantir que as tarefas de PlatMgmt e COMM tenham prazos compatíveis com os requisitos de tempo real, enquanto as tarefas de PredMaint podem ser configuradas com prazos mais flexíveis.
-
-| Tarefa (Task)          | Descrição                                                                                                                                       | Prioridade (RM) | Período (T) | Tempo de Execução (C) | Prazo (D) |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------- | --------------------- | --------- |
-| **Task_COMM_RX**       | Receção de dados da rede. Processa as mensagens recebidas dos veículos seguidores (estado, velocidade, anomalias).               | Alta (1)        | 50 ms       | 10 ms                 | 50 ms     |
-| **Task_PlatMgmt**      | Agrega os dados recebidos, atualiza a matriz de estado do pelotão e envia comandos para a ECU de Controlo do Veículo. | Média-Alta (2)  | 100 ms      | 20 ms                 | 100 ms    |
-| **Task_COMM_TX**       | Transmissão de dados para a rede. Envia os comandos de sincronização do líder e respostas para os veículos seguidores.                          | Média-Alta (2)  | 100 ms      | 10 ms                 | 100 ms    |
-| **Task_PredMaint**     | Processa os dados de manutenção preditiva recebidos dos vários veículos e executa algoritmos de deteção de anomalias.                           | Baixa (3)       | 1000 ms     | 100 ms                | 1000 ms   |
-
-
-Esta taskset é apenas um exemplo teórico e deve ser ajustada com base em testes empíricos e simulações para garantir que os prazos são cumpridos e que o sistema é robusto face a variações no tráfego de rede e na carga de processamento.
-
-Para este exemplo o calculo da escalonabilidade é feito usando a fórmula de Liu & Layland para escalonamento Rate Monotonic (RM):
-$$ U = \sum_{i=1}^{n} \frac{C_i}{T_i} $$
-Onde $C_i$ é o tempo de execução da tarefa $i$ e $T_i$ é o período da tarefa $i$. Para um sistema ser escalonável sob RM, a utilização total $U$ deve ser menor ou igual a $n(2^{1/n} - 1)$, onde $n$ é o número de tarefas.
-
-Neste caso, com 4 tarefas, o limite de escalonabilidade é aproximadamente 0.7568. Calculando a utilização total:
-$$ U = \frac{10}{50} + \frac{20}{100} + \frac{10}{100} + \frac{100}{1000} = 0.2 + 0.2 + 0.1 + 0.1 = 0.6 $$
-Como $U = 0.6$ é menor que o limite de 0.7568, o sistema é escalonável sob RM.
 
