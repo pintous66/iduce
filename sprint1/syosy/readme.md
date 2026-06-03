@@ -4,94 +4,61 @@
 
 Para este sistema de *Platoon Monitoring*, a arquitetura de comunicação divide-se em dois domínios principais, cada um com requisitos de rede e restrições de tempo muito distintos:
 
-* **Comunicação Intra-veículo (Crítica e de Tempo Real):** Os módulos de tomada de decisão, particularmente o Controlo do Veículo (*Vehicle Control* - VC), necessitam de receber dados de vários sensores para decidir ações imediatas. Estas decisões de curto prazo ocorrem em intervalos curtos de 0.1s a 5s. Com base na representação do mundo à sua volta, o VC emite comandos diretos para os atuadores físicos do veículo, nomeadamente a direção, a travagem e o motor (*powertrain*). Este nível exige uma fiabilidade extrema e latência ultra-baixa.
-* **Comunicação Inter-veículo (Monitorização e Gestão):** A aplicação exige que o veículo líder mantenha uma visão atualizada do estado de todos os veículos que compõem o *platoon*. Isto obriga à partilha de informação não apenas entre os subsistemas internos de um veículo, mas também entre veículos diferentes. Os veículos seguidores têm de enviar os dados do seu módulo de Manutenção Preditiva (*PredMaint*, como a temperatura do motor, pressão dos pneus e estado dos travões) para o módulo de Gestão do Platoon (*PlatMgmt*) residente no líder. Este nível exige tecnologias capazes de suportar comunicação sem fios adaptável a condições de rede em movimento.
-
-**Tabela de Requisitos de Fluxos de Dados (Feeds)**
-
-| Domínio | Origem da Informação | Destino da Informação | Requisitos Operacionais |
-| :--- | :--- | :--- | :--- |
-| **Intra-veículo** | Sensores (Câmaras, LiDAR, GPS) | *Vehicle Control* (VC) | Latência mínima e alta largura de banda para mapeamento do mundo. |
-| **Intra-veículo** | *Vehicle Control* (VC) | Atuadores (Travões, Direção) | Tempo real crítico (resposta entre 0.1s e 5s) e extremo determinismo. |
-| **Inter-veículo** | *PredMaint* (Seguidores) | *Platoon Management* (Líder) | Fiabilidade na entrega e capacidade de operar em movimento contínuo. |
+* **Comunicação Intra-veículo (Crítica e de Tempo Real):** Os módulos de tomada de decisão, particularmente o Controlo do Veículo (*Vehicle Control* - VC), necessitam de receber dados de vários sensores para decidir ações imediatas. Estas decisões ocorrem em intervalos curtos de 0.1s a 5s. Com base na representação do mundo à sua volta, o VC emite comandos diretos para os atuadores físicos do veículo (direção, travagem e *powertrain*). Este nível exige uma fiabilidade extrema e latência ultra-baixa.
+* **Comunicação Inter-veículo (Monitorização e Gestão):** A aplicação exige que o veículo líder mantenha uma visão atualizada do estado de todos os veículos que compõem o *platoon*. Os veículos seguidores enviam dados do módulo de Manutenção Preditiva (*PredMaint*) para o módulo de Gestão do Platoon (*PlatMgmt*) no líder. Este nível exige tecnologias capazes de suportar comunicação sem fios adaptável a condições de rede em movimento.
 
 ---
 
-#### 3.2. Seleção de Tecnologias de Comunicação
+#### 3.2. Seleção de Tecnologias de Comunicação e Justificação Física
 
-Com base na análise de requisitos operacionais, foram avaliadas e selecionadas as seguintes tecnologias de rede e transporte de dados para garantir a segurança e a sincronização do *platoon*:
+A escolha das tecnologias baseia-se na alocação física das Unidades de Controlo Eletrónico (ECUs) e nas limitações matemáticas de largura de banda de cada barramento.
 
 **Domínio Intra-veículo (Rede Interna)**
-* **CAN Bus (Controller Area Network):** A norma standard da indústria automóvel para os sistemas de controlo. É a escolha ideal para a comunicação entre o módulo VC e os atuadores críticos. Garante determinismo (o tempo máximo de entrega da mensagem é garantido), um fator não negociável para o controlo mecânico.
-* **Automotive Ethernet:** O CAN Bus tem limitações de velocidade que o tornam inadequado para transmitir vídeo. O Automotive Ethernet foi selecionado para ligar os sensores de alta densidade (como Câmaras e LiDAR) ao módulo de controlo, oferecendo a largura de banda (Gigabit) necessária para o processamento de imagem em tempo real.
+* **Automotive Ethernet (ECU Perceção $\rightarrow$ ECU Controlo):** O processamento de dados densos, como os provenientes de câmaras, exige uma largura de banda maciça. Se considerarmos uma única câmara a transmitir vídeo sem compressão a 720p e 30 frames por segundo (fps) em RGB (24 bits por pixel), o débito de dados necessário calcula-se da seguinte forma:
+$$1280 \times 720 \text{ pixels} \times 24 \text{ bits/pixel} \times 30 \text{ fps} \approx 663.5 \text{ Mbps}$$
+Como o CAN Bus standard está limitado a 1 Mbps, é fisicamente impossível transmitir estes dados por essa via. Logo, o Automotive Ethernet (ex: 1000BASE-T1 de 1 Gbps) é estritamente necessário.
 
-**Domínio Inter-veículo (V2V - Vehicle-to-Vehicle)**
-* **5G C-V2X (Cellular Vehicle-to-Everything):** Para a partilha de telemetria e avisos de manutenção entre os camiões seguidores e o líder, selecionou-se a tecnologia C-V2X. Especificamente, a funcionalidade *Sidelink* (interface PC5) permite que os camiões comuniquem diretamente uns com os outros com latências da ordem de milissegundos, sem precisarem de passar o tráfego pelas antenas das operadoras móveis locais.
-* **Alternativa / Fallback - IEEE 802.11p (ITS-G5):** Uma tecnologia fiável baseada na norma Wi-Fi e desenhada especificamente para veículos em movimento. Servirá como protocolo de redundância (backup) caso haja constrangimentos na implementação do hardware 5G.
+* **CAN Bus (ECU Controlo $\rightarrow$ ECUs Atuadores):** A norma standard para controlo mecânico. O CAN garante determinismo com latências na ordem dos milissegundos. Embora a velocidade seja baixa (1 Mbps), o *payload* máximo de cada mensagem é de 8 bytes, o que é perfeitamente adequado e eficiente para enviar comandos simples (ex: ângulo de viragem ou pressão do travão).
 
-**Resumo da Avaliação Tecnológica**
-
-| Ligação (Feed) | Tecnologia Selecionada | Justificação Principal |
-| :--- | :--- | :--- |
-| **Sensores $\rightarrow$ VC** | Automotive Ethernet | Elevado débito de dados (largura de banda) para *streams* de perceção espacial. |
-| **VC $\rightarrow$ Atuadores** | CAN Bus | Fiabilidade comprovada, resistência a interferências e latência ultra-baixa. |
-| **Seguidores $\rightarrow$ Líder**| 5G C-V2X (Sidelink) | Comunicação V2V direta, robusta a altas velocidades e baixa latência. |
-
-#### 3.3. Definição dos Mecanismos de Troca de Dados (Arquitetura)
-
-Para coordenar o fluxo de dados entre os veículos do *platoon*, foi avaliado o paradigma *Request-Response* (como o protocolo HTTP/REST) em contraste com o paradigma *Publish-Subscribe* (Pub/Sub). 
-
-Para este cenário, o paradigma **Publish-Subscribe**, implementado através do protocolo **MQTT (Message Queuing Telemetry Transport)**, foi o mecanismo escolhido. Esta decisão baseia-se nos seguintes fatores:
-* **Eficiência e Assincronismo:** Ao contrário do REST, que exigiria que o veículo líder fizesse perguntas constantes (*polling*) a cada seguidor ("Como está a tua pressão dos pneus?"), o MQTT permite que os seguidores enviem dados apenas quando há atualizações ou de forma assíncrona.
-* **Baixo Overhead:** O MQTT possui um cabeçalho de mensagem extremamente leve, o que poupa largura de banda na rede sem fios (C-V2X / 802.11p).
-* **Resiliência de Rede:** É ideal para cenários de mobilidade onde a ligação pode sofrer micro-cortes, dado que o *Broker* gere a entrega das mensagens.
-
-**Arquitetura de Tópicos (Topic Tree):**
-O módulo de Gestão do Platoon (*PlatMgmt*) no veículo líder aloja (ou está diretamente ligado a) o *Broker* MQTT. Os veículos seguidores atuam como publicadores (*Publishers*) e o líder como subscritor (*Subscriber*).
-* Exemplo de tópico para publicação: `platoon/veiculo_<ID>/predmaint`
-* O líder subscreve o tópico usando *wildcards* para ouvir todos os seguidores simultaneamente: `platoon/+/predmaint`
+**Domínio Inter-veículo (V2V)**
+* **5G C-V2X (Sidelink):** Selecionado para a partilha de telemetria (JSON) entre camiões. Permite comunicação direta V2V com latências mínimas e capacidade para suportar o tamanho dinâmico dos ficheiros JSON gerados pela Manutenção Preditiva.
 
 ---
 
-#### 3.4. Especificação dos Modelos de Dados (Estrutura das Mensagens)
+#### 3.3. Definição dos Mecanismos de Troca de Dados (Arquitetura Lógica)
 
-Para garantir a interoperabilidade do sistema (permitindo que camiões de marcas diferentes integrem o mesmo *platoon*), os modelos de dados devem seguir uma linguagem comum e normalizada.
+Para coordenar o fluxo de dados entre os veículos do *platoon*, o paradigma **Publish-Subscribe**, implementado através do protocolo **MQTT**, foi o mecanismo escolhido. 
+* **Eficiência e Assincronismo:** Os seguidores enviam dados apenas quando há atualizações, poupando largura de banda.
+* **Arquitetura de Tópicos:** O módulo *PlatMgmt* no veículo líder aloja o *Broker* MQTT. O líder subscreve tópicos (ex: `platoon/+/predmaint`) para receber dados de todos os seguidores de forma unificada.
 
-O formato escolhido para a serialização dos dados é o **JSON (JavaScript Object Notation)**. A estrutura das propriedades baseia-se nas normas da indústria, nomeadamente nos **FIWARE Smart Data Models** (focados em *Smart Aeronautics and Automotive*), adaptados para os requisitos específicos de Manutenção Preditiva do nosso projeto.
+---
 
-**Exemplo de Payload: Mensagem de Estado de Manutenção Preditiva**
-Esta mensagem é gerada pelo módulo *PredMaint* de um veículo seguidor e enviada via MQTT para o líder, reportando o estado de parâmetros críticos como a pressão dos pneus e a temperatura do motor.
+#### 3.4. Especificação dos Modelos de Dados (JSON via MQTT / Ethernet)
 
+As comunicações de alto nível (entre a ECU de Manutenção Preditiva e a ECU de Gestão de Platoon) utilizam **JSON**, modelado com base nas normas *FIWARE Smart Data Models*.
+
+**Payload JSON: Estado de Manutenção Preditiva (ECU 4 $\rightarrow$ ECU 7)**
 ```json
 {
   "id": "urn:ngsi-ld:Vehicle:Truck-Follower-02",
   "type": "VehiclePredictiveMaintenance",
-  "timestamp": "2026-06-02T20:30:00Z",
-  "platoonId": "Platoon-Alpha-7",
+  "timestamp": "2026-06-03T21:50:00Z",
   "telemetry": {
-    "speed": {
-      "value": 85.5,
-      "unit": "km/h"
-    },
-    "engineTemperature": {
-      "value": 92.0,
-      "unit": "Celsius",
-      "status": "NORMAL"
-    },
-    "tirePressure": {
-      "frontLeft": 8.1,
-      "frontRight": 8.0,
-      "rearLeft": 7.5,
-      "rearRight": 7.6,
-      "unit": "Bar",
-      "status": "WARNING",
-      "alertMessage": "Low pressure detected on rear axle."
-    }
+    "engineTemperature": { "value": 92.0, "unit": "Celsius" },
+    "tirePressure": { "rearLeft": 7.5, "unit": "Bar", "status": "WARNING" }
   },
   "overallHealthStatus": "WARNING"
 }
 ```
-**Mapeamento de Atributos Críticos:**
-id e type: Identificadores normalizados do veículo e do tipo de mensagem.
-timestamp: Carimbo de tempo exato da leitura (crucial para detetar atrasos na rede).
-status: Variável de estado (NORMAL, WARNING, CRITICAL) que permite ao módulo de Platoon Management do líder processar regras rapidamente (ex: acionar uma travagem de emergência do platoon se o estado for CRITICAL).
+
+#### 3.5. Mapeamento de Cargas Físicas Críticas (Tramas CAN)
+
+Ao contrário das comunicações V2V, a comunicação interna de controlo (ECU de Controlo → ECUs de Atuação) **não utiliza JSON**, de forma a não exceder o limite restrito de 8 bytes (64 bits) do protocolo *CAN Bus*. O modelo de dados é mapeado ao nível do bit.
+
+Trama CAN: Comando de Direção (ECU 5 → ECU 8 - Steering ECU)
+Para caber nos 8 bytes físicos do CAN Bus, a mensagem estruturada pelo Vehicle Control distribui-se da seguinte forma:
+* **Byte 0-1 (16 bits):** Ângulo de Viragem Requerido (−720º a +720º com resolução de 0.1º).
+* **Byte 2-3 (16 bits):** Binário Requerido (Torque do motor de assistência à direção).
+* **Byte 4 (8 bits):** Estado do Comando (0x00 = Inativo, 0x01 = Ativo, 0x02 = Emergência).
+* **Byte 5 (8 bits):** Contador de Ciclo (Alive Counter para garantir que a ligação não falhou).
+* **Byte 6-7 (16 bits):** Checksum (CRC) para validação da integridade da mensagem.
