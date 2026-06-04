@@ -64,7 +64,6 @@ Assim, embora o QNX represente a opção tecnicamente mais segura e o AUTOSAR a 
 | **Requisitos de hardware**          | Muito reduzidos                    | Moderados     | Elevados                |
 | **Custos de licenciamento**         | Gratuito                           | Elevados      | Elevados                |
 
-
 ## Resumo da decisão
 
 Embora o QNX Neutrino apresente a arquitetura mais robusta e segura para sistemas automóveis críticos, os benefícios adicionais não justificam o aumento substancial de custo, complexidade e requisitos computacionais para o contexto deste projeto. Por sua vez, o AUTOSAR OS oferece uma forte integração com os processos industriais automóveis, mas a sua complexidade torna-o excessivamente pesado para um protótipo académico.
