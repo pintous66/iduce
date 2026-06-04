@@ -60,13 +60,3 @@ A alocação dos componentes pelas ECUs foi definida com base nas responsabilida
 
 - **ECU 8/9/10 - Actuator ECUs**  
   Steering, Braking e Powertrain foram colocados em ECUs dedicadas por serem atuadores críticos para o veículo. Esta separação permite maior modularidade e isolamento de falhas, evitando que uma falha num atuador afete diretamente os restantes.
-
-### Interfaces principais
-
-| Interface | Dados normalizados | Consumidores |
-| --- | --- | --- |
-| Perception Interface | Informação sobre obstáculos e ambiente envolvente proveniente de câmaras, LiDAR e sensores ultrassónicos | VC |
-| Position Interface | Posição, velocidade e timestamp provenientes do GPS | VC, NAV |
-| Wheel Motion Interface | Velocidade das rodas e dados de movimento | VC, NAV, COMM, PredMaint |
-| Steering Interface | Ângulo/estado da direção | VC, COMM |
-| Health Interface | Pressão dos pneus, temperatura do motor e estado dos travões | PredMaint |
