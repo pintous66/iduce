@@ -37,7 +37,7 @@ Para coordenar o fluxo de dados entre os veículos do *platoon*, o paradigma **P
 
 As comunicações de alto nível (entre a ECU de Manutenção Preditiva e a ECU de Gestão de Platoon) utilizam **JSON**, modelado com base nas normas *FIWARE Smart Data Models*.
 
-**Payload JSON: Estado de Manutenção Preditiva (ECU 4 $\rightarrow$ ECU 7)**
+**Exemplo de Payload JSON: Estado de Manutenção Preditiva (ECU 4 $\rightarrow$ ECU 7)**
 ```json
 {
   "id": "urn:ngsi-ld:Vehicle:Truck-Follower-02",
@@ -55,10 +55,16 @@ As comunicações de alto nível (entre a ECU de Manutenção Preditiva e a ECU 
 
 Ao contrário das comunicações V2V, a comunicação interna de controlo (ECU de Controlo → ECUs de Atuação) **não utiliza JSON**, de forma a não exceder o limite restrito de 8 bytes (64 bits) do protocolo *CAN Bus*. O modelo de dados é mapeado ao nível do bit.
 
-Trama CAN: Comando de Direção (ECU 5 → ECU 8 - Steering ECU)
+Exemplo Trama CAN: Comando de Direção (ECU 5 → ECU 8 - Steering ECU)
 Para caber nos 8 bytes físicos do CAN Bus, a mensagem estruturada pelo Vehicle Control distribui-se da seguinte forma:
 * **Byte 0-1 (16 bits):** Ângulo de Viragem Requerido (−720º a +720º com resolução de 0.1º).
 * **Byte 2-3 (16 bits):** Binário Requerido (Torque do motor de assistência à direção).
 * **Byte 4 (8 bits):** Estado do Comando (0x00 = Inativo, 0x01 = Ativo, 0x02 = Emergência).
 * **Byte 5 (8 bits):** Contador de Ciclo (Alive Counter para garantir que a ligação não falhou).
 * **Byte 6-7 (16 bits):** Checksum (CRC) para validação da integridade da mensagem.
+
+### 3.6. Organização via Diagrama de Comunicação
+
+O diagrama abaixo ilustra a arquitetura de comunicação, destacando os fluxos de dados entre os módulos e as tecnologias utilizadas:
+
+![Diagrama de Comunicação](ECU_Allocation_1.png)
