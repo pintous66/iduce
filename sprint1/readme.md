@@ -27,8 +27,68 @@ Os principais marcos do sprint 1 incluem:
 
 ## 1.3 Design de Arquitetura (VEVCA)
 
+A seguinte secção apresenta o design de arquitetura proposto para o sistema de monitorização de *platooning*, incluindo a alocação dos componentes pelas ECUs e a justificação da mesma.
 
-## 1.4 Real-Time Operating System (RTOS) Design and Selection (RTOPR)
+### Diagrama de Arquitetura
+
+O diagrama apresenta a arquitetura proposta para o sistema de monitorização de *platooning*. A arquitetura representa os principais subsistemas do veículo, os sensores e atuadores físicos, e os fluxos de informação usados para trocar dados entre os componentes de software.
+
+A arquitetura foi definida de forma a representar diretamente as dependências entre sensores, módulos de decisão, comunicação, gestão do *platoon* e atuadores. Neste caso, as ligações entre blocos representam interfaces lógicas de dados entre produtores e consumidores de informação. Assim, as setas entre sensores, módulos e atuadores indicam que dados são fornecidos e por quem são consumidos, sem introduzir camadas intermédias adicionais no diagrama.
+
+![Diagrama de Arquitetura](vevca/arquitetura.svg)
+
+As cores do diagrama representam a alocação lógica dos componentes pelas ECUs. Assim, o mesmo diagrama mostra simultaneamente os fluxos entre sensores, módulos e atuadores, e a distribuição proposta dos componentes pelas unidades computacionais do veículo.
+
+Esta opção mantém a arquitetura simples e focada nos principais fluxos de dados do sistema. As interfaces são representadas diretamente pelas ligações entre componentes, em vez de serem modeladas como blocos físicos separados. Desta forma, o diagrama evidencia as relações entre sensores, módulos de decisão, comunicação, gestão do *platoon* e atuadores.
+
+O *Vehicle Control* é responsável pelas decisões de curto prazo, como acelerar, travar ou virar, e envia comandos para os atuadores de *Steering*, *Braking* e *Powertrain*. A *Navigation* fornece informação de rota ao *Vehicle Control*. O *Platoon Management* mantém a visão do estado do *platoon* e fornece decisões de nível superior ao *Vehicle Control*. O *Predictive Maintenance* monitoriza o estado do veículo e, dependendo do papel do veículo, comunica os seus resultados ao *Platoon Management*, quando o veículo atua como líder, ou ao *Communication*, quando o veículo atua como seguidor.
+
+No caso dos seguidores, uma potencial avaria detetada pelo *PredMaint* é enviada através do *COMM* para o veículo líder. No líder, o *COMM* encaminha a informação recebida para o *PlatMgmt*, que atualiza a visão global do *platoon*. Caso seja necessário encostar à berma, o *PlatMgmt* influencia o *VC* do líder, e os seguidores continuam a replicar a trajetória do líder de acordo com o comportamento de *platooning*.
+
+#### Alocação Hardware/Software por ECU
+
+| ECU | Nome | Componentes |
+| --- | --- | --- |
+| ECU 1 | *Perception ECU* | Cameras, LiDAR, Ultrasonic Sensors |
+| ECU 2 | *Localization, Motion & Navigation ECU* | GPS, Wheel Speed Sensor, Steering Sensor, NAV |
+| ECU 3 | *Health & Diagnostics ECU* | Tyre Pressure Sensors, Engine Temperature Sensors, Brake Status Sensors |
+| ECU 4 | *Predictive Maintenance ECU* | PredMaint |
+| ECU 5 | *Vehicle Control ECU* | VC |
+| ECU 6 | *Communication ECU* | COMM |
+| ECU 7 | *Platoon Management ECU* | PlatMgmt - ativo no líder |
+| ECU 8 | *Steering ECU* | Steering |
+| ECU 9 | *Braking ECU* | Braking |
+| ECU 10 | *Powertrain ECU* | Powertrain |
+
+#### Justificação da alocação por ECUs
+
+A alocação dos componentes pelas ECUs foi definida com base nas responsabilidades funcionais, criticidade temporal, volume de dados processado e isolamento de falhas. Esta separação permite distribuir o processamento pelo veículo sem acoplar todos os sensores, módulos de decisão e atuadores numa única ECU.
+
+- **ECU 1 - Perception ECU**  
+  Agrupa os sensores responsáveis pela perceção do ambiente, nomeadamente câmaras, LiDAR e sensores ultrassónicos. Estes sensores têm uma responsabilidade funcional semelhante e produzem dados usados para construir a representação do mundo envolvente do veículo. A sua alocação conjunta permite concentrar os dados de perceção numa unidade dedicada.
+
+- **ECU 2 - Localization, Motion & Navigation ECU**  
+  Agrega os sensores relacionados com localização e movimento, como GPS, *wheel speed sensor* e *steering sensor*. O módulo *NAV* também é colocado nesta ECU porque depende diretamente destes dados para calcular e atualizar a rota. Esta separação permite concentrar dados cinemáticos e de posicionamento numa unidade funcionalmente coerente.
+
+- **ECU 3 - Health & Diagnostics ECU**  
+  Concentra os sensores associados ao estado físico do veículo, como *tyre pressure*, *engine temperature* e *brake status*. Esta ECU tem como responsabilidade recolher dados de diagnóstico relacionados com a condição física dos principais subsistemas do veículo.
+
+- **ECU 4 - Predictive Maintenance ECU**  
+  Executa o *PredMaint* numa ECU dedicada porque este módulo pode envolver processamento computacionalmente mais pesado, incluindo análise de tendências, correlação entre sensores, previsão de falhas e possível modelação baseada em *digital twins*. A separação evita que este processamento interfira com tarefas de controlo em tempo-real.
+
+- **ECU 5 - Vehicle Control ECU**  
+  Isola o *VC* numa ECU dedicada por ser o núcleo crítico do sistema de controlo. Este módulo executa decisões de curto prazo, como acelerar, travar e virar, com requisitos temporais mais exigentes. A sua separação reduz interferência de outros módulos e facilita uma política de escalonamento mais determinística.
+
+- **ECU 6 - Communication ECU**  
+  Contém o *COMM*, responsável pela comunicação entre veículos do *platoon*. Esta separação isola o tráfego de comunicação externa dos módulos de controlo e permite gerir receção, envio e validação de mensagens de estado de forma independente.
+
+- **ECU 7 - Platoon Management ECU**  
+  Contém o *PlatMgmt*, responsável por manter a visão atualizada do *platoon* e agregar informação recebida através do *COMM*. Embora o componente possa existir em todos os veículos, a sua função principal fica ativa no veículo que assume o papel de líder.
+
+- **ECU 8/9/10 - Actuator ECUs**  
+  *Steering*, *Braking* e *Powertrain* foram colocados em ECUs dedicadas por serem atuadores críticos para o veículo. Esta separação permite maior modularidade e isolamento de falhas, evitando que uma falha num atuador afete diretamente os restantes.
+
+## 1.4 Real-Time Operating System (RTOS) Design and Selection (RTOPR) 
 
 Esta secção detalha a seleção e as diretrizes de configuração do Sistema Operativo de Tempo Real (RTOS) responsável por gerir a Unidade de Controlo Eletrónico (ECU) dedicada exclusivamente à Gestão do Pelotão (*Platoon Management*).
 
