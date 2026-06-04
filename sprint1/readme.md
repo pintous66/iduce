@@ -6,13 +6,13 @@ Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
 1. [Introdução](#11-introdução)
 2. [Planeamento do Sprint 1 (PMDEV)](#12-planeamento-do-sprint-1-pmdev)
 3. [Design de Arquitetura (VEVCA)](#13-design-de-arquitetura-vevca)
-4. [Real-Time Operating System (RTOS) Design and Selection (RTOPR)](#14-real-time-operating-system-rtos-design-and-selection-rtopr)
+4. [Real-Time OS (RTOPR)](#14-real-time-os-rtopr)
 5. [Tecnologias de Comunicação (SYOSY)](#15-tecnologias-de-comunicação-syosy)
 6. [Conclusão](#16-conclusão)
 
 
 ## 1.1. Introdução
-Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos no contexto da unicade curricular de IDUCE (Engenharia de Casos de Uso Focados na Indústria). Este projeto foca-se na definição da arquitetura do sistema, na escolha do Sistema Operativo de Tempo Real (RTOS) e das tecnologias de comunicação a utilizar. O objetivo é criar um sistema robusto e eficiente que permita a coordenação eficaz entre os veículos do pelotão, garantindo a segurança e a fiabilidade das operações.
+Este documento apresenta a análise e o planeamento para a implementação de um sistema de gestão de pelotão de veículos autónomos no contexto da unicade curricular de IDUCE (Engenharia de Casos de Uso Focados na Indústria). Este projeto foca-se na definição da arquitetura do sistema, na escolha do Sistema Operativo de Tempo Real (RTOS) e das tecnologias de comunicação a utilizar. O objetivo é criar um sistema robusto e eficiente que permita a coordenação eficaz entre os veículos do pelotão, garantindo a segurança e a fiabilidade das operações. 
 
 ## 1.2 Planeamento do Sprint 1 (PMDEV)
 
@@ -24,6 +24,8 @@ Os principais marcos do sprint 1 incluem:
 - Construção do design de arquiterura;
 - Estudo, análise e escolha do RTOS a utilizar e das suas funcionalidades chave;
 - Estuda, análise e escolha das tecnologias de comunicação a utilizar;
+
+<div style="page-break-after: always"></div>
 
 ## 1.3 Design de Arquitetura (VEVCA)
 
@@ -184,6 +186,8 @@ $$1280 \times 720 \text{ pixels} \times 24 \text{ bits/pixel} \times 30 \text{ f
 Como o CAN Bus standard está limitado a 1 Mbps, é fisicamente impossível transmitir estes dados por essa via. Logo, o Automotive Ethernet (ex: 1000BASE-T1 de 1 Gbps) é estritamente necessário.
 
 * **CAN Bus (ECU Controlo $\rightarrow$ ECUs Atuadores):** A norma standard para controlo mecânico. O CAN garante determinismo com latências na ordem dos milissegundos. Embora a velocidade seja baixa (1 Mbps), o *payload* máximo de cada mensagem é de 8 bytes, o que é perfeitamente adequado e eficiente para enviar comandos simples (ex: ângulo de viragem ou pressão do travão).
+
+<div style="page-break-after: always"></div>
 
 **Domínio Inter-veículo (V2V)**
 * **5G C-V2X (Sidelink):** Selecionado para a partilha de telemetria (JSON) entre camiões. Permite comunicação direta V2V com latências mínimas e capacidade para suportar o tamanho dinâmico dos ficheiros JSON gerados pela Manutenção Preditiva.
