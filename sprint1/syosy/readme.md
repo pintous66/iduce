@@ -67,4 +67,4 @@ Para caber nos 8 bytes físicos do CAN Bus, a mensagem estruturada pelo Vehicle 
 
 O diagrama abaixo ilustra a arquitetura de comunicação, destacando os fluxos de dados entre os módulos e as tecnologias utilizadas:
 
-![Diagrama de Comunicação](ECU_Allocation_1.png)
+![Diagrama de Comunicação](ECU_Allocation_1.jpeg)
