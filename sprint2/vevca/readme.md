@@ -17,3 +17,8 @@ Os requisitos foram identificados e classificados em requisitos funcionais (F) e
 | F-11 | Funcional | Quando o PlatMgmt identificar uma condição crítica, deve fornecer ao VC do líder uma decisão de manobra segura. |
 | Q-01 | Qualidade | O módulo VC deve executar decisões de curto prazo dentro da janela temporal definida para o controlo do veículo. |
 | Q-02 | Qualidade | O sistema deve ignorar dados de sensores ou mensagens inter-veículo com timestamp expirado. |
+| Q-03 | Qualidade | O sistema deve ser capaz de lidar com falhas de sensores ou comunicação sem comprometer a segurança do veículo. |
+
+### Máquina de Estados
+
+![Máquina de Estados](./statemachine.png)
