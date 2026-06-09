@@ -1,0 +1,34 @@
+stateDiagram-v2
+    [*] --> OperacaoPlatoonAtiva
+
+    state OperacaoPlatoonAtiva {
+        [*] --> OperacaoPlatoon
+
+        OperacaoPlatoon: Platoon em operação normal
+        OperacaoPlatoon --> MonitorizacaoVeiculo: Monitorizar
+
+        MonitorizacaoVeiculo: Estado do veículo é verificado
+        MonitorizacaoVeiculo --> OperacaoPlatoon: Sem avaria
+        MonitorizacaoVeiculo --> PotencialAvaria: Avaria detetada
+
+        PotencialAvaria: Comportamento anormal detetado
+        PotencialAvaria --> EnviarEstadoLider: Seguidor afetado
+        PotencialAvaria --> AvaliacaoLider: Líder afetado
+
+        EnviarEstadoLider: Seguidor reporta estado
+        EnviarEstadoLider --> AvaliacaoLider: Estado recebido
+
+        AvaliacaoLider: [APENAS LÍDER] Impacto é avaliado
+        AvaliacaoLider --> OperacaoPlatoon: Não crítico
+        AvaliacaoLider --> DecisaoPararPlatoon: Crítico
+
+        DecisaoPararPlatoon: [APENAS LÍDER] Paragem necessária
+    }
+
+    OperacaoPlatoonAtiva --> ParagemPlatoon: Comando de paragem enviado
+
+    ParagemPlatoon: Platoon abranda
+    ParagemPlatoon --> PlatoonParado: Paragem concluída
+
+    PlatoonParado: Platoon parado em segurança
+    PlatoonParado --> [*]

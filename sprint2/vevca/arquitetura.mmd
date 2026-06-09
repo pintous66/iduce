@@ -1,0 +1,113 @@
+%%{init: {"flowchart": {"htmlLabels": true, "defaultRenderer": "elk", "curve": "linear", "nodeSpacing": 65, "rankSpacing": 120}}}%%
+
+flowchart TB
+
+subgraph V["Arquitetura do Veículo<br/>"]
+direction TB
+
+    subgraph S["Subsistema de Sensores"]
+    direction LR
+        CAM["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[1]</span><span>Câmaras</span></div>"]
+        LIDAR["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[1]</span><span>LiDAR</span></div>"]
+        US["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[1]</span><span>Sensores Ultrassónicos</span></div>"]
+
+        GPS["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[2]</span><span>GPS</span></div>"]
+        WHEEL["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[2]</span><span>Sensor de Velocidade das Rodas</span></div>"]
+        STEER_S["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[2]</span><span>Sensor de Direção</span></div>"]
+
+        TYRE["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[3]</span><span>Sensores de Pressão dos Pneus</span></div>"]
+        ENGINE["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[3]</span><span>Sensores de Temperatura do Motor</span></div>"]
+        BRAKE_S["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[3]</span><span>Sensores do Estado dos Travões</span></div>"]
+    end
+
+    subgraph M["Subsistemas do Veículo"]
+    direction LR
+        NAV["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[2]</span><span>Navegação<br/>(NAV)</span></div>"]
+        PRED["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[3]</span><span>Manutenção Preditiva<br/>(PredMaint)</span></div>"]
+        COMM["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[5]</span><span>Comunicação<br/>(COMM)</span></div>"]
+        VC["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[4]</span><span>Controlo do Veículo<br/>(VC)</span></div>"]
+        PLAT["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[4]</span><span>Gestão do Platoon<br/>(PlatMgmt)</span></div>"]
+    end
+
+    subgraph A["Subsistema de Atuadores"]
+    direction LR
+        STEERING["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[6]</span><span>Direção</span></div>"]
+        BRAKING["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[7]</span><span>Travagem</span></div>"]
+        POWER["<div style='display:flex; align-items:center; gap:8px;'><span style='font-size:22px; font-weight:bold;'>[8]</span><span>Powertrain</span></div>"]
+    end
+
+    CAM --> VC
+    LIDAR --> VC
+    US --> VC
+
+    GPS --> VC
+    GPS --> NAV
+
+    WHEEL --> VC
+    WHEEL --> NAV
+    WHEEL --> COMM
+    WHEEL --> PRED
+
+    STEER_S --> VC
+    STEER_S --> COMM
+
+    TYRE --> PRED
+    ENGINE --> PRED
+    BRAKE_S --> PRED
+
+    NAV --> VC
+
+    PRED -->|"veículo líder"| PLAT
+    PRED -->|"veículo seguidor"| COMM
+
+    COMM --> PLAT
+    PLAT --> VC
+
+    VC --> STEERING
+    VC --> BRAKING
+    VC --> POWER
+end
+
+subgraph LEG["Alocação Hardware / ECU"]
+direction LR
+    LEG1["<span style='font-size:22px'><b>[1]</b></span> Perceção"] --- 
+    LEG2["<span style='font-size:22px'><b>[2]</b></span> Localização, Movimento e Navegação"] --- 
+    LEG3["<span style='font-size:22px'><b>[3]</b></span> Diagnóstico e Manutenção Preditiva"] --- 
+    LEG4["<span style='font-size:22px'><b>[4]</b></span> Controlo e Gestão do Platoon"] --- 
+    LEG5["<span style='font-size:22px'><b>[5]</b></span> Comunicação"] --- 
+    LEG6["<span style='font-size:22px'><b>[6]</b></span> Direção"] --- 
+    LEG7["<span style='font-size:22px'><b>[7]</b></span> Travagem"] --- 
+    LEG8["<span style='font-size:22px'><b>[8]</b></span> Powertrain"]
+end
+
+V ~~~ LEG
+
+classDef ecu1 fill:#7FD3FF,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu2 fill:#9BE38A,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu3 fill:#FF8A8A,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu4 fill:#FFE97A,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu5 fill:#7EE6D8,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu6 fill:#FFBE6B,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu7 fill:#FF9FD0,stroke:#000,stroke-width:2px,color:#000;
+classDef ecu8 fill:#B8A8FF,stroke:#000,stroke-width:2px,color:#000;
+
+style V fill:#f8f8f8,stroke:#333,stroke-width:2px,color:#000;
+style LEG fill:#ffffff,stroke:#333,stroke-width:2px,color:#000;
+
+class CAM,LIDAR,US ecu1;
+class GPS,WHEEL,STEER_S,NAV ecu2;
+class TYRE,ENGINE,BRAKE_S,PRED ecu3;
+class VC,PLAT ecu4;
+class COMM ecu5;
+class STEERING ecu6;
+class BRAKING ecu7;
+class POWER ecu8;
+
+class LEG1 ecu1;
+class LEG2 ecu2;
+class LEG3 ecu3;
+class LEG4 ecu4;
+class LEG5 ecu5;
+class LEG6 ecu6;
+class LEG7 ecu7;
+class LEG8 ecu8; 
