@@ -2,7 +2,7 @@
 
 ## Requisitos
 
-Os requisitos foram identificados e classificados em requisitos funcionais (F) e requisitos de qualidade (Q). Os requisitos funcionais descrevem comportamentos esperados do sistema, enquanto os requisitos de qualidade descrevem propriedades relevantes como desempenho, fiabilidade, isolamento de falhas e verificabilidade.
+Os requisitos foram identificados e classificados em requisitos funcionais (F) e requisitos de qualidade (Q). Os requisitos funcionais descrevem comportamentos esperados do sistema, enquanto os requisitos de qualidade descrevem propriedades relevantes como desempenho, fiabilidade e isolamento de falhas.
 
 | ID | Tipo | Texto |
 | --- | --- | --- |
@@ -13,7 +13,7 @@ Os requisitos foram identificados e classificados em requisitos funcionais (F) e
 | F-05 | Funcional | O módulo VC deve tomar decisões de curto prazo com base nos dados de perceção, localização, movimento, direção, rota e estado do platoon. |
 | F-06 | Funcional | O módulo VC deve enviar comandos para os atuadores de direção, travagem e powertrain. |
 | F-07 | Funcional | O módulo PredMaint deve avaliar o estado do veículo com base nos dados de diagnóstico e movimento. |
-| F-08 | Funcional | O módulo PredMaint deve classificar o estado do veículo como normal, warning ou critical. |
+| F-08 | Funcional | O módulo PredMaint deve classificar o estado do veículo como normal, aviso ou crítico. |
 | F-09 | Funcional | Quando um veículo seguidor detetar uma condição warning ou critical, o sistema deve enviar essa informação ao veículo líder através do módulo COMM. |
 | F-10 | Funcional | O módulo PlatMgmt deve manter uma visão atualizada da posição, direção, velocidade e estado de cada veículo do platoon. |
 | F-11 | Funcional | Quando o PlatMgmt identificar uma condição crítica, deve fornecer ao VC do líder uma decisão de manobra segura. |
@@ -25,18 +25,38 @@ Os requisitos foram identificados e classificados em requisitos funcionais (F) e
 
 ![Máquina de Estados](./maquina_estado.png)
 
-## Erros
+## HAZOP (Hazard and Operability Study)
 
-* H-01: Perda de dados de perceção provenientes das câmaras, LiDAR ou sensores ultrassónicos.
-* H-02: Deteção incorreta de obstáculos ou limites da via pelo subsistema de perceção.
-* H-03: Localização incorreta do veículo devido a erros de GPS ou posicionamento.
-* H-04: Estimativa incorreta do estado de movimento do veículo devido a falhas nos sensores de velocidade das rodas ou direção.
-* H-05: Falha do PredMaint na deteção de uma avaria do veículo.
-* H-06: Classificação incorreta de uma avaria crítica como não crítica.
-* H-07: Transmissão tardia do estado de avaria de um veículo seguidor para o veículo líder.
-* H-08: Perda de comunicação entre veículos seguidores e o veículo líder.
-* H-09: Estado incorreto do platoon mantido pelo PlatMgmt.
-* H-10: Falha na execução de comandos de paragem ou controlo através da direção, travagem ou powertrain.
+Depois de ter o design do sistema quase fechado, realizámos um estudo HAZOP para identificar possíveis perigos e falhas no sistema. Este estudo tem como objetivo identificar desvios face ao comportamento esperado do sistema, analisar as suas causas e consequências, definir ações para controlar ou reduzir os riscos identificados, e garantir que esses problemas são registados e acompanhados ao longo do desenvolvimento.
+
+### Etapas do HAZOP
+
+1. Dividir o sistema em secções para análise, como por exemplo, sensores, comunicação, controlo do veículo e atuadores.
+1. Escolher o nó para o estudo, como por exemplo, o atuador de travagem.
+1. Descrever a função do nó, como por exemplo, o atuador de travagem deve executar o comando enviado pelo VC para reduzir a velocidade ou parar o veículo.
+1. Escolher um parâmetro para o nó, como por exemplo, o comando de travagem ou a força de travagem aplicada.
+1. Escolher uma palavra-guia para o parâmetro, como por exemplo, "Não", "Errado" ou "Tarde".
+1. Identificar o desvio resultante da combinação entre o parâmetro e a palavra-guia, como por exemplo, o comando de travagem não é executado.
+1. Determinar as causas do desvio, como por exemplo, falha na ECU de travagem, falha de interface, avaria no atuador ou perda do comando enviado pelo VC.
+1. Avaliar os problemas/consequências do desvio, como por exemplo, o veículo pode não conseguir reduzir a velocidade ou parar após uma avaria crítica.
+1. Definir a ação recomendada (o que fazer, quando e quem).
+1. Guardar a informação.
+1. Repetir a partir do segundo passo.
+
+## Desvios identificados
+
+Com base nos principais nós da arquitetura proposta, foram identificados alguns desvios relevantes para análise. Estes desvios incluem:
+
+- H-01: Perda de dados de perceção provenientes das câmaras, LiDAR ou sensores ultrassónicos.
+- H-02: Deteção incorreta de obstáculos ou limites da via pelo subsistema de perceção.
+- H-03: Localização incorreta do veículo devido a erros de GPS ou posicionamento.
+- H-04: Estimativa incorreta do estado de movimento do veículo devido a falhas nos sensores de velocidade das rodas ou direção.
+- H-05: Falha do PredMaint na deteção de uma avaria do veículo.
+- H-06: Classificação incorreta de uma avaria crítica como não crítica.
+- H-07: Transmissão tardia do estado de avaria de um veículo seguidor para o veículo líder.
+- H-08: Perda de comunicação entre veículos seguidores e o veículo líder.
+- H-09: Estado incorreto do platoon mantido pelo PlatMgmt.
+- H-10: Falha na execução de comandos de paragem ou controlo através da direção, travagem ou powertrain.
 
 | Nó/Função                       | Parâmetro                                        | Palavra-guia | Desvio                                                        | Possíveis causas                                                                                                 | Possíveis consequências                                                                     | Salvaguardas existentes/propostas                                                                | Recomendações                                                                                                                    |
 | ------------------------------- | ------------------------------------------------ | ------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -50,3 +70,5 @@ Os requisitos foram identificados e classificados em requisitos funcionais (F) e
 | Comunicação seguidor-líder      | Mensagem de estado                               | Não          | A mensagem de estado do seguidor não é recebida pelo líder    | Falha de comunicação, falha da antena, perda de pacotes, falha da ECU de comunicação                             | O líder fica com uma visão incompleta do platoon e pode não reagir à avaria do seguidor     | Mensagens heartbeat, deteção por timeout, retransmissão                                          | Ativar modo degradado se o estado de um seguidor estiver ausente durante um período definido                                     |
 | Gestão do platoon               | Visão do estado do platoon                       | Errado       | O líder mantém uma visão incorreta do platoon                 | Dados desatualizados, ID de veículo incorreto, erro de sincronização, mensagem corrompida                        | O líder pode tomar uma decisão insegura ao nível do platoon                                 | Validação de timestamps, verificação de IDs dos veículos, verificações de consistência           | Forçar atualizações sincronizadas do estado do platoon e descartar mensagens desatualizadas                                      |
 | Controlo do veículo / atuadores | Comando de paragem / controlo                    | Não          | O comando de paragem ou controlo não é executado              | Falha no VC, falha na ECU do atuador, falha de interface, falha na direção, travagem ou powertrain               | O veículo ou o platoon pode não conseguir parar após uma avaria crítica                     | Feedback dos atuadores, watchdog, confirmação de comandos                                        | Exigir confirmação da execução dos comandos pelos atuadores e entrar em modo fail-safe se a execução falhar                      |
+
+A análise HAZOP mostra que os principais riscos do sistema estão associados à perda ou incorreção de dados sensoriais, atrasos na comunicação entre veículos, classificação incorreta de avarias e falha na execução de comandos críticos. As recomendações propostas focam-se em validação de dados, deteção por timeout, redundância, confirmação de comandos e entrada em modo degradado ou fail-safe quando a informação disponível não é fiável.
