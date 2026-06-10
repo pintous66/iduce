@@ -1,12 +1,133 @@
 # Sprint 2: Real-Time OS Design - Platoon Management (RTOPR)
 
-## Introdução: Revisão da Arquitetura do Sistema
+## 0. Melhoramentos e Correções do Sprint 1
 
-Neste segundo sprint, a arquitetura do sistema sofreu uma revisão significativa com o objetivo de otimizar a latência e simplificar a infraestrutura de hardware. A Unidade de Controlo do Veículo (VC) e o módulo de Gestão do Pelotão (PlatMgmt) passaram a residir na mesma Unidade de Controlo Eletrónico (ECU).
+Na sequência da revisão dos resultados do Sprint 1, esta secção apresenta uma análise comparativa aprofundada dos Sistemas Operativos de Tempo Real (RTOS) avaliados para o sistema. O objetivo é fundamentar de forma rigorosa as classificações atribuídas, com especial foco nas garantias de determinismo temporal de cada tecnologia, suportando as decisões em especificações técnicas e literatura científica.
+### Tabela Comparativa de RTOS
 
-Esta consolidação arquitetural altera o paradigma de comunicação: em vez de os módulos trocarem dados através de uma rede externa, a passagem de informação passa a ser gerida internamente pelo Sistema Operativo de Tempo Real (FreeRTOS) através de mecanismos de Inter-Process Communication (IPC). O foco deste desenho recai sobre o isolamento do módulo de Platoon Management, definindo como o RTOS aloca tempo de processador às tarefas de gestão do pelotão, garantindo que o processamento das comunicações e da manutenção preditiva não bloqueia os ciclos críticos de atuação física do veículo (VC).
+| Critério | FreeRTOS | AUTOSAR OS | QNX Neutrino |
+|-----------|----------|------------|--------------|
+| Determinismo temporal | Elevado | Muito elevado | Muito elevado |
+| Segurança funcional | Limitada (sem certificação nativa) | Muito elevada | Muito elevada |
+| Isolamento de falhas | Reduzido (kernel plano/sem MPU ativa) | Moderado | Excelente (microkernel puro) |
+| Suporte multicore | Sim (SMP) | Sim | Sim |
+| Complexidade de desenvolvimento | Baixa | Muito elevada | Elevada |
+| Requisitos de hardware | Muito reduzidos | Moderados | Elevados |
+| Custos de licenciamento | Gratuito | Elevados | Elevados |
 
-Claro que num cenário ideal, o VC e o PlatMgmt estariam pelo menos em núcleos separados, algo que vai ser tido em conta quando for feita a análise de escalabilidade, mas para efeitos de simplificação e foco na gestão do pelotão, ambos os módulos partilham a mesma ECU neste sprint.
+### Justificação Científica e Técnica do Determinismo Temporal
+
+O determinismo temporal define a capacidade de um sistema operativo de tempo real (RTOS) garantir matematicamente que uma tarefa responde a um evento e conclui a sua execução dentro de um limite máximo estrito de tempo, conhecido como **Worst-Case Execution Time (WCET)**.
+
+As classificações apresentadas na Tabela 1 baseiam-se nos seguintes fundamentos técnicos e científicos.
+
+### 1. FreeRTOS (Determinismo: Elevado)
+
+#### Fundamentação
+
+O determinismo do FreeRTOS resulta do seu algoritmo de escalonamento preemptivo baseado em prioridades estritas. A latência de interrupção e o tempo de mudança de contexto (*context switch*) são previsíveis e determinísticos, permitindo respostas rápidas para a maioria das aplicações embebidas (Barry, 2016).
+
+#### Limitações
+
+O FreeRTOS é classificado como **Elevado**, e não como **Muito Elevado**, porque permite, por defeito, a criação dinâmica de tarefas e a alocação dinâmica de memória (*heap*) durante a execução.
+
+Caso o sistema não seja configurado para utilizar exclusivamente recursos estáticos, podem surgir:
+
+- Fragmentação de memória;
+- Latências imprevisíveis;
+- Variações no WCET.
+
+Estas características reduzem o determinismo absoluto do sistema (Amsel et al., 2019).
+
+#### Referências
+
+Barry, R. (2016). *Using the FreeRTOS Real Time Kernel: A Practical Guide*. Real Time Engineers Ltd.
+
+Amsel, M., et al. (2019). *Performance Evaluation and Overhead Analysis of Open-Source Real-Time Operating Systems for Critical Applications*. IEEE Transactions on Industrial Informatics.
+
+---
+
+### 2. AUTOSAR OS / OSEK (Determinismo: Muito Elevado)
+
+#### Fundamentação
+
+A arquitetura AUTOSAR OS, derivado diretamente do padrão OSEK/VDX, impõe uma configuração totalmente estática.
+
+Todos os elementos do sistema devem ser definidos durante a compilação:
+
+- Tarefas;
+- Alarmes;
+- Recursos;
+- Prioridades;
+- Eventos.
+
+Não existe criação dinâmica de tarefas nem alocação dinâmica de memória durante a execução.
+
+Esta abordagem elimina praticamente todas as fontes de indeterminação algorítmica no kernel, proporcionando um comportamento temporal altamente previsível (AUTOSAR, 2021).
+
+#### Mecanismo de Proteção Temporal
+
+O AUTOSAR OS deve incluir ainda o mecanismo de **Timing Protection**, responsável por monitorizar continuamente os tempos de execução das tarefas.
+
+Este mecanismo permite:
+
+- Detetar excessos de tempo de execução;
+- Impedir que tarefas defeituosas monopolizem recursos;
+- Garantir o cumprimento dos *deadlines* das tarefas críticas.
+
+Segundo Lemieux (2001), esta funcionalidade constitui uma das principais razões para a utilização do AUTOSAR OS em sistemas automóveis com requisitos de segurança rigorosos.
+
+### Referências
+
+AUTOSAR. (2021). *Specification of Operating System (Release R21-11)*. AUTOSAR Standard Document.
+
+Lemieux, J. (2001). *Programming Embedded Systems in C and C++: OSEK/VDX Operating System Standard*. CRC Press.
+
+---
+
+### 3. QNX Neutrino (Determinismo: Muito Elevado)
+
+#### Fundamentação
+
+O QNX Neutrino adota uma arquitetura de microkernel puro baseada nas normas POSIX.
+
+O núcleo executa apenas as funções essenciais:
+
+- Escalonamento;
+- Gestão de interrupções;
+- Comunicação entre processos (*Inter-Process Communication – IPC*).
+
+Todos os restantes serviços operam em user-space.
+
+Esta separação reduz significativamente a complexidade do kernel e mantém as latências de interrupção na ordem dos microssegundos, mesmo sob cargas elevadas de processamento (Hildebrand, 1992).
+
+#### Adaptive Partitioning
+
+O QNX reforça o seu comportamento determinístico através do mecanismo de **Adaptive Partitioning Scheduler (APS)**.
+
+Este mecanismo:
+
+- Divide o processador em partições temporais;
+- Reserva percentagens mínimas de CPU para aplicações críticas;
+- Impede a privação de recursos (*resource starvation*).
+
+Assim, mesmo que uma aplicação não crítica falhe ou entre num ciclo infinito, as tarefas críticas continuam a receber o tempo de processamento necessário para cumprir os seus requisitos temporais (QNX Software Systems, 2020).
+
+### Referências
+
+Hildebrand, D. (1992). *An Architectural Overview of QNX*. Proceedings of the USENIX Workshop on Micro-kernels and Other Kernel Architectures.
+
+QNX Software Systems. (2020). *QNX Neutrino RTOS Architecture Primer*. BlackBerry Guide Documentation.
+
+---
+
+### Conclusão
+
+Do ponto de vista do determinismo temporal, a arquiterura **AUTOSAR OS** e o **QNX Neutrino** apresentam desempenho superior ao **FreeRTOS**, uma vez que eliminam ou controlam rigorosamente as fontes de imprevisibilidade temporal.
+
+O AUTOSAR OS alcança este resultado através de uma arquitetura totalmente estática e da proteção temporal integrada, enquanto o QNX Neutrino beneficia da sua arquitetura de microkernel e dos mecanismos de particionamento adaptável de CPU.
+
+O FreeRTOS continua a constituir uma solução altamente eficiente para sistemas embebidos com recursos limitados, mas exige uma configuração cuidadosa para atingir níveis de determinismo comparáveis aos dos RTOS orientados para aplicações críticas de segurança. 
 
 ---
 
@@ -14,25 +135,136 @@ Claro que num cenário ideal, o VC e o PlatMgmt estariam pelo menos em núcleos 
 
 Para efeitos de escalonamento no FreeRTOS, os processos associados à Gestão do Pelotão foram divididos em tarefas independentes, separando claramente a receção, processamento e transmissão de dados.
 
-- **Task_PlatMgmt_Update**: Tarefa central responsável por manter uma visão atualizada da posição, direção, velocidade e estado dos outros membros do pelotão. Processa os dados recebidos para criar uma matriz de estado consolidada que será consumida pela tarefa de VC.
+- **Task_PlatMgmt_Update**: Tarefa central responsável por manter uma visão atualizada da posição, direção, velocidade e estado do veicúlo atual e dos outros membros do pelotão. Processa os dados recebidos para criar uma matriz de estado consolidada que será consumida pela tarefa de VC e Task_PlatMgmt_COMM_TX.
 
-- **Task_PlatMgmt_COMM_RX**: Lida com a receção assíncrona de dados provenientes da rede (telemetria dos seguidores). Entrega os dados brutos à tarefa principal do PlatMgmt. 
+- **Task_PlatMgmt_COMM_RX**: Lida com a receção assíncrona de dados provenientes da rede (telemetria dos seguidores ou ordens do líder). Deixa os dados brutos preparados para a tarefa principal do PlatMgmt. 
 
 - **Task_PlatMgmt_COMM_TX**: Lida com a transmissão síncrona de dados para a rede. No veículo líder, transmite as ordens de marcha ou decisões de paragem de emergência para os veículos seguidores. No veículo seguidor, transmite a telemetria atualizada para o líder.
 
-- **Task_PredMaint_Leader**: Presente no veículo líder, monitoriza e agrega o estado dos subsistemas dos vários veículos para fins de manutenção preditiva, visando prever anomalias antes que estas ocorram.
+- **Task_PredMaint_Leader**: Presente no veículo líder, monitoriza e agrega o estado dos subsistemas dos vários veículos para fins de manutenção preditiva, visando prever anomalias antes que estas ocorram. Deixa as decisões (caso existam) prontas a ler para serem comunicadas aos veiculos seguidores.
 
 ---
 
-## 2. Mecanismos de Sincronização (IPC e Concorrência)
+## 2. Identificação de Recursos Partilhados e Sincronização
 
-Com o PlatMgmt e o VC a partilharem a mesma ECU e espaço de memória, a troca de dados exige mecanismos de sincronização estritos para evitar a corrupção de dados e garantir determinismo:
+A troca de dados entre as várias tarefas independentes exige mecanismos de sincronização robustos para evitar a corrupção de memória e garantir o determinismo temporal. No contexto do FreeRTOS, os recursos partilhados foram concebidos da seguinte forma.
 
-- **Memória Partilhada protegida por Mutexes**: O estado global do pelotão é guardado numa estrutura de dados partilhada. O acesso de leitura/escrita a esta estrutura é estritamente protegido por um Mutex.
+### 2.1 Estrutura de Estado do Pelotão (Recurso A)
 
-- **Protocolo de Herança de Prioridade (Priority Inheritance Protocol)**: Existindo tarefas de maior prioridade, se estas tentarem ler o estado do pelotão enquanto o PlatMgmt (que possui prioridade inferior) estiver a escrever, o FreeRTOS eleva temporariamente a prioridade do PlatMgmt. Este mecanismo previne a inversão de prioridade, garantindo que o recurso é libertado rapidamente para a atuação do veículo.
+Trata-se de uma estrutura de dados global que contém a matriz atualizada com a posição, velocidade, direção e estado operacional de cada veículo pertencente ao pelotão.
 
-- **Filas de Mensagens (Message Queues)**: Os pacotes de rede recolhidos pelas Rotinas de Serviço de Interrupção (ISR) são colocados em filas de mensagens para acordar a Task_PlatMgmt_COMM_RX, permitindo absorver picos de tráfego na rede (jitter) sem bloquear o processador.
+### Mecanismo RTOS
+
+Por permitir operações concorrentes de leitura e escrita sobre dados complexos, esta estrutura encontra-se protegida por um **Mutex**, utilizando o mecanismo de **Priority Inheritance** disponibilizado pelo FreeRTOS para evitar situações de inversão de prioridade.
+
+### Tarefas - Produtores e Consumidores
+
+**Produtor:**
+
+* `Task_PlatMgmt_Update` — responsável pela atualização contínua da informação do pelotão.
+
+**Consumidores:**
+
+* `Task_PredMaint_Leader` — consulta os dados para executar algoritmos de manutenção preditiva e deteção de anomalias.
+
+
+---
+
+## 3.2 Fila de Mensagens de Receção (RX Message Queue) (Recurso B)
+
+Esta fila é utilizada para armazenar temporariamente os pacotes recebidos através da rede de comunicações inter-veicular antes do respetivo processamento pela lógica de gestão do pelotão.
+
+A sua principal função consiste em absorver variações temporárias na taxa de chegada das mensagens (*network jitter*), desacoplando a receção física da rede do processamento lógico da aplicação.
+
+### Mecanismo RTOS
+
+A implementação utiliza uma **Message Queue** nativa do FreeRTOS.
+
+Esta abordagem oferece:
+
+* Sincronização automática entre tarefas;
+* Operações de bloqueio seguras;
+* Eliminação da necessidade de Mutexes adicionais para acesso à fila (thread-safe).
+
+### Tarefas - Produtores e Consumidores
+
+**Produtores:**
+
+* `Task_PlatMgmt_COMM_RX`;
+
+**Consumidor:**
+
+* `Task_PlatMgmt_Update`, que processa as mensagens segundo uma política FIFO (*First-In First-Out*).
+
+---
+
+## 3.3 Fila de Mensagens de Transmissão (TX Message Queue) (Recurso C)  
+
+Esta fila agrega todos os pacotes produzidos internamente que necessitam de ser transmitidos para a rede de comunicações do pelotão.
+
+### Mecanismo RTOS
+
+A implementação utiliza igualmente uma **Message Queue** do FreeRTOS.
+
+Esta solução suporta naturalmente o modelo:
+
+* **Multiple Producers**
+* **Single Consumer**
+
+permitindo que várias tarefas submetam mensagens para transmissão sem comprometer a integridade dos dados.
+
+### Consumidor
+
+A tarefa responsável pela leitura e envio das mensagens é:
+
+* `Task_PlatMgmt_COMM_TX`
+
+Esta tarefa remove sequencialmente os pacotes da fila e encaminha-os para a infraestrutura física de comunicação.
+
+### Produtores e Lógica de Papéis
+
+O preenchimento da fila depende diretamente da função desempenhada pelo veículo dentro do pelotão.
+
+#### Veículo Líder
+
+No veículo líder, duas tarefas podem produzir mensagens para transmissão.
+
+**Task_PlatMgmt_Update**
+
+Responsável pelo envio periódico de:
+
+* Comandos de sincronização;
+* Velocidade de referência;
+* Ordens de coordenação do pelotão;
+* Informação operacional necessária aos veículos seguidores.
+
+**Task_PredMaint_Leader**
+
+Pode gerar mensagens assíncronas de elevada prioridade quando os algoritmos de manutenção preditiva identificam situações críticas.
+
+Exemplos:
+
+* Ordem de redução de velocidade;
+* Solicitação de inspeção;
+* Ordem de saída do pelotão;
+* Comando de paragem de emergência devido à previsão de falha severa num veículo seguidor.
+
+#### Veículo Seguidor
+
+Nos veículos seguidores existe apenas um produtor para esta fila.
+
+**Task_PlatMgmt_Update**
+
+Esta tarefa recolhe e envia periodicamente:
+
+* Telemetria local;
+* Estado dos sensores;
+* Estado dos atuadores;
+* Diagnósticos dos subsistemas internos;
+* Informação operacional necessária ao veículo líder para manter uma visão global do pelotão.
+
+Desta forma, a arquitetura implementa um fluxo de informação hierárquico, no qual o líder distribui comandos operacionais e os seguidores reportam continuamente o seu estado, garantindo consistência, previsibilidade temporal e suporte à manutenção preditiva.
+
 
 ---
 
@@ -42,12 +274,13 @@ O sistema utilizará um escalonamento preemptivo baseado em prioridades fixas, a
 
 O planeamento temporal do PlatMgmt foi desenhado para alimentar atempadamente as decisões do VC, cujo ciclo de decisão varia entre 0.1s e 5s.
 
-| Tarefa | Prioridade (RM) | Período (Ti) | Execução (Ci) | Prazo (Di) |
-|--------|----------------|--------------|---------------|------------|
-| COMM_RX | Alta | 50 ms | 10 ms | 50 ms |
-| Update | Média-Alta | 100 ms | 20 ms | 100 ms |
-| COMM_TX | Média | 100 ms | 15 ms | 100 ms |
-| PredMaint | Baixa | 1000 ms | 50 ms | 1000 ms |
+
+| Tarefa | Prioridade (RM) | Período (Ti) | Execução (Ci) | Prazo (Di) | Recurso Partilhado |
+|--------|----------------|--------------|---------------|------------|---------------------|
+| COMM_RX | Alta | 50 ms | 10 ms | 50 ms | B |
+| Update | Média-Alta | 100 ms | 20 ms | 100 ms | A, B e C |
+| COMM_TX | Média | 100 ms | 15 ms | 100 ms | C |
+| Leader | Baixa | 1000 ms | 50 ms | 1000 ms | A e C |
 
 **Justificação das Propriedades Temporais:**
 
@@ -59,47 +292,8 @@ O planeamento temporal do PlatMgmt foi desenhado para alimentar atempadamente as
 
 ---
 
-## 4. Análise de Escalonabilidade
 
-Para comprovar que as tarefas de gestão do pelotão não excedem a capacidade de processamento e cumprem sempre os seus prazos teóricos, foi efetuada uma verificação matemática utilizando o teste de limite de utilização de processador de Liu & Layland para o algoritmo Rate Monotonic (RM).
-
-A utilização total do processador (U) para o sub-sistema PlatMgmt é dada por:
-
-$$
-U_{PlatMgmt} = \sum_{i=1}^{n} \frac{C_i}{T_i}
-$$
-
-Substituindo com os valores teóricos da tabela:
-
-$$
-U_{PlatMgmt} = \frac{10 ms}{50 ms} + \frac{20 ms}{100 ms} + \frac{15 ms}{100 ms} + \frac{50 ms}{1000 ms}
-$$
-
-$$
-U_{PlatMgmt} = 0.20 + 0.20 + 0.15 + 0.05 = 0.60
-$$
-
-O sub-sistema consome 60% da capacidade do processador.
-
-O limite teórico superior (U_bound) para um conjunto de n = 4 tarefas, abaixo do qual o escalonamento RM é garantido independentemente das fases de chegada, é:
-
-$$
-U_{bound} = n(2^{1/n} - 1)
-$$
-
-$$
-U_{bound} = 4(2^{1/4} - 1) \approx 0.756
-$$
-
-Uma vez que:
-
-$$
-0.60 \le 0.756
-$$
-
-o taskset de Gestão do Pelotão é teoricamente escalonável.
-
-## 5. Considerações sobre a Arquitetura de Hardware (Multi-Core)
+## 4. Considerações sobre a Arquitetura de Hardware (Multi-Core)
 
 É fundamental notar que esta análise de escalonabilidade assume a utilização de um processador de, pelo menos, dois núcleos (dual-core) na ECU. Nesta arquitetura, o Controlo do Veículo (VC) e a Gestão do Pelotão (PlatMgmt) partilham a mesma ECU, mas cada módulo é alocado a um núcleo dedicado (Core Affinity).  
 
