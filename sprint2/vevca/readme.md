@@ -1,6 +1,44 @@
 # VEVCA
 
-## Requisitos
+## Platoon Monitoring
+
+O Platoon Monitoring é um sistema de monitorização para veículos autónomos em platoon. O veículo líder mantém uma visão atualizada do estado de todos os veículos e, ao identificar uma potencial avaria, coordena a manobra de paragem segura na berma da estrada. Cada veículo é composto por sensores, atuadores e um conjunto de módulos de controlo (VC, NAV, PredMaint, PlatMgmt e COMM) que comunicam entre si e com os restantes veículos do platoon.
+
+No primeiro sprint foi definida a arquitetura do sistema, identificados os requisitos e modelado o comportamento através de um diagrama de atividades. Neste segundo sprint, com o design consolidado e algumas melhorias no trabalho já realizado, foi feito um estudo HAZOP para identificar possíveis perigos e falhas.
+
+## Melhorias Sprint 1
+
+### Descrição dos componentes
+
+- **Sensores** recolhem dados do ambiente e do estado físico do veículo — perceção (câmara, LiDAR, ultrassons), localização e movimento (GPS, velocidade, direção) e diagnóstico (pressão dos pneus, temperatura, travões).
+- **NAV** recebe os dados de localização e movimento e calcula ou atualiza a rota do veículo.
+- **PredMaint** recebe os dados de diagnóstico e movimento, avalia o estado de saúde do veículo e classifica-o como normal, aviso ou crítico.
+- **VC** é o núcleo de decisão de cada veículo. Recebe os dados de perceção, a rota do NAV, o estado do PredMaint e o estado do platoon, toma decisões de controlo de curto prazo e envia comandos para os atuadores (direção, travagem, powertrain).
+- **COMM** gere a comunicação V2V. No seguidor, transmite o estado de saúde ao líder. No líder, difunde as decisões de manobra a todos os seguidores.
+- **PlatMgmt** (exclusivo do líder) mantém uma visão atualizada da posição, velocidade e estado de cada veículo do platoon, e quando deteta uma condição crítica fornece ao VC do líder uma decisão de manobra segura.
+
+### Fluxo de dados
+
+| Origem | Dados | Destino |
+| --- | --- | --- |
+| Câmaras, LiDAR, ultrassons | Dados de perceção | VC |
+| GPS | Localização | VC, NAV |
+| Sensor de velocidade das rodas | Velocidade das rodas | VC, NAV, COMM, PredMaint |
+| Sensor de direção | Ângulo de direção | VC, COMM |
+| Sensores de pressão, temperatura e travões | Dados de diagnóstico | PredMaint |
+| NAV | Rota calculada | VC |
+| PredMaint | Classificação do estado do veículo | VC |
+| PredMaint | Estado de saúde (aviso/crítico) | COMM (seguidor) |
+| PredMaint | Estado de saúde (aviso/crítico) | PlatMgmt (líder) |
+| COMM (seguidor) | Mensagem de estado V2V | COMM (líder) |
+| COMM (líder) | Estado recebido dos seguidores | PlatMgmt |
+| PlatMgmt | Decisão de manobra segura | VC (líder) |
+| VC (líder) | Comando de manobra a difundir | COMM (líder) |
+| COMM (líder) | Comando de manobra V2V | COMM (seguidor) |
+| COMM (seguidor) | Comando de manobra recebido | VC (seguidor) |
+| VC | Comandos de direção, travagem, powertrain | Atuadores |
+
+### Requisitos
 
 Os requisitos foram identificados e classificados em requisitos funcionais (F) e requisitos de qualidade (Q). Os requisitos funcionais descrevem comportamentos esperados do sistema, enquanto os requisitos de qualidade descrevem propriedades relevantes como desempenho, fiabilidade e isolamento de falhas.
 
@@ -14,16 +52,22 @@ Os requisitos foram identificados e classificados em requisitos funcionais (F) e
 | F-06 | Funcional | O módulo VC deve enviar comandos para os atuadores de direção, travagem e powertrain. |
 | F-07 | Funcional | O módulo PredMaint deve avaliar o estado do veículo com base nos dados de diagnóstico e movimento. |
 | F-08 | Funcional | O módulo PredMaint deve classificar o estado do veículo como normal, aviso ou crítico. |
-| F-09 | Funcional | Quando um veículo seguidor detetar uma condição warning ou critical, o sistema deve enviar essa informação ao veículo líder através do módulo COMM. |
+| F-09 | Funcional | Quando um veículo seguidor detetar uma condição de aviso ou crítico, o sistema deve enviar essa informação ao veículo líder através do módulo COMM. |
 | F-10 | Funcional | O módulo PlatMgmt deve manter uma visão atualizada da posição, direção, velocidade e estado de cada veículo do platoon. |
 | F-11 | Funcional | Quando o PlatMgmt identificar uma condição crítica, deve fornecer ao VC do líder uma decisão de manobra segura. |
+| F-12 | Funcional | Quando uma manobra segura for iniciada pelo líder, o sistema deve comunicar essa decisão aos veículos seguidores através do módulo COMM. |
+| F-13 | Funcional | Cada veículo seguidor deve executar localmente a manobra recebida, ajustando direção, travagem e powertrain através do seu próprio VC. |
 | Q-01 | Qualidade | O módulo VC deve executar decisões de curto prazo dentro da janela temporal definida para o controlo do veículo. |
 | Q-02 | Qualidade | O sistema deve ignorar dados de sensores ou mensagens inter-veículo com timestamp expirado. |
-| Q-03 | Qualidade | O sistema deve ser capaz de lidar com falhas de sensores ou comunicação sem comprometer a segurança do veículo. |
+| Q-03 | Qualidade | O sistema deve comparar os dados de sensores entre si para detetar valores incorretos e evitar que decisões sejam tomadas com base em leituras inválidas. |
 
-## Máquina de Estados
+### Diagrama de arquitetura do sistema
 
-![Máquina de Estados](./maquina_estado.png)
+[Diagrama de arquitetura do sistema](./diagrama_arquitetura.png)
+
+### Diagrama de atividades
+
+![Diagrama de atividades](./diagrama_atividades.png)
 
 ## HAZOP (Hazard and Operability Study)
 
@@ -43,7 +87,7 @@ Depois de ter o design do sistema quase fechado, realizámos um estudo HAZOP par
 1. Guardar a informação.
 1. Repetir a partir do segundo passo.
 
-## Desvios identificados
+### Desvios identificados
 
 Com base nos principais nós da arquitetura proposta, foram identificados alguns desvios relevantes para análise. Estes desvios incluem:
 
@@ -58,17 +102,33 @@ Com base nos principais nós da arquitetura proposta, foram identificados alguns
 - H-09: Estado incorreto do platoon mantido pelo PlatMgmt.
 - H-10: Falha na execução de comandos de paragem ou controlo através da direção, travagem ou powertrain.
 
-| Nó/Função                       | Parâmetro                                        | Palavra-guia | Desvio                                                        | Possíveis causas                                                                                                 | Possíveis consequências                                                                     | Salvaguardas existentes/propostas                                                                | Recomendações                                                                                                                    |
-| ------------------------------- | ------------------------------------------------ | ------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Sensores de perceção            | Dados de câmaras, LiDAR e sensores ultrassónicos | Não          | Sem dados de perceção disponíveis                             | Falha de sensor, câmara obstruída, falha do LiDAR, falha de cablagem, falha de entrada na ECU                    | O veículo pode não detetar obstáculos, limites da via ou veículos próximos                  | Diagnóstico dos sensores, redundância entre sensores de perceção, deteção por timeout            | Adicionar monitorização do estado dos sensores e mudar para modo degradado quando os dados de perceção não estiverem disponíveis |
-| Processamento de perceção       | Objetos / limites da via detetados               | Errado       | Obstáculos ou limites da via são detetados incorretamente     | Mau tempo, ruído nos sensores, erro de calibração, falha no algoritmo de perceção                                | Decisão incorreta de trajetória, distância insegura entre veículos, possível colisão        | Verificação cruzada entre câmara, LiDAR e sensores ultrassónicos; verificações de plausibilidade | Exigir validação multi-sensor antes de usar dados de perceção em decisões de controlo                                            |
-| Localização                     | Posição do veículo                               | Errado       | A posição do veículo é estimada incorretamente                | Erro de GPS, perda de sinal, inconsistência com o mapa, falha no algoritmo de localização                        | Seguimento incorreto da trajetória ou estimativa incorreta da posição do veículo no platoon | Validação do GPS, comparação com velocidade das rodas, estimação de confiança                    | Adicionar monitorização da confiança da posição e estratégia alternativa de localização                                          |
-| Sensores de movimento           | Velocidade / ângulo de direção                   | Errado       | O estado de movimento do veículo é estimado incorretamente    | Falha no sensor de velocidade das rodas, falha no sensor de direção, erro de calibração, leituras desatualizadas | O VC pode calcular comandos inseguros de aceleração, travagem ou direção                    | Verificações de gama, verificação de timestamps, verificações de plausibilidade                  | Comparar dados de movimento com valores anteriores e rejeitar medições inconsistentes                                            |
-| Manutenção preditiva            | Estado de saúde do veículo                       | Não          | A avaria não é detetada                                       | Falha de software no PredMaint, falta de dados de diagnóstico, falha de sensor                                   | O veículo continua a operar com uma falha não detetada                                      | Monitorização de diagnóstico, verificações periódicas de saúde, watchdog                         | Adicionar verificações obrigatórias para pressão dos pneus, temperatura do motor e estado dos travões                            |
-| Manutenção preditiva            | Severidade da avaria                             | Errado       | Avaria crítica classificada como não crítica                  | Limiar incorreto, falha no algoritmo, dados desatualizados, entrada incorreta de sensores                        | O platoon pode continuar a operar quando deveria parar                                      | Limiares de severidade, verificação de frescura dos dados, regras de validação                   | Definir regras conservadoras de classificação de severidade para dados incertos ou inconsistentes                                |
-| Comunicação seguidor-líder      | Tempo da mensagem de estado                      | Tarde        | O estado de avaria do seguidor chega demasiado tarde ao líder | Atraso na rede, perda de pacotes, congestionamento de comunicação, sobrecarga da ECU                             | O líder atualiza o estado do platoon tarde demais e pode atrasar a decisão de paragem       | Timestamps nas mensagens, timeout de comunicação, mensagens prioritárias                         | Definir um atraso máximo aceitável para mensagens de avaria                                                                      |
-| Comunicação seguidor-líder      | Mensagem de estado                               | Não          | A mensagem de estado do seguidor não é recebida pelo líder    | Falha de comunicação, falha da antena, perda de pacotes, falha da ECU de comunicação                             | O líder fica com uma visão incompleta do platoon e pode não reagir à avaria do seguidor     | Mensagens heartbeat, deteção por timeout, retransmissão                                          | Ativar modo degradado se o estado de um seguidor estiver ausente durante um período definido                                     |
-| Gestão do platoon               | Visão do estado do platoon                       | Errado       | O líder mantém uma visão incorreta do platoon                 | Dados desatualizados, ID de veículo incorreto, erro de sincronização, mensagem corrompida                        | O líder pode tomar uma decisão insegura ao nível do platoon                                 | Validação de timestamps, verificação de IDs dos veículos, verificações de consistência           | Forçar atualizações sincronizadas do estado do platoon e descartar mensagens desatualizadas                                      |
-| Controlo do veículo / atuadores | Comando de paragem / controlo                    | Não          | O comando de paragem ou controlo não é executado              | Falha no VC, falha na ECU do atuador, falha de interface, falha na direção, travagem ou powertrain               | O veículo ou o platoon pode não conseguir parar após uma avaria crítica                     | Feedback dos atuadores, watchdog, confirmação de comandos                                        | Exigir confirmação da execução dos comandos pelos atuadores e entrar em modo fail-safe se a execução falhar                      |
+### HAZOP
 
-A análise HAZOP mostra que os principais riscos do sistema estão associados à perda ou incorreção de dados sensoriais, atrasos na comunicação entre veículos, classificação incorreta de avarias e falha na execução de comandos críticos. As recomendações propostas focam-se em validação de dados, deteção por timeout, redundância, confirmação de comandos e entrada em modo degradado ou fail-safe quando a informação disponível não é fiável.
+#### Palavras-guia
+
+| Palavra-guia   | Significado                                          | Exemplo no sistema                                                      |
+| -------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| Não            | A intenção de funcionamento não é cumprida           | O comando de travagem não é executado                                   |
+| Mais           | Existe um aumento quantitativo num parâmetro         | A velocidade estimada é superior à velocidade real                      |
+| Menos          | Existe uma diminuição quantitativa num parâmetro     | A força de travagem aplicada é inferior à necessária                    |
+| Além de        | Ocorre uma atividade adicional não esperada          | O veículo envia uma mensagem duplicada ou adicional ao líder            |
+| Parte de       | Apenas parte da intenção de funcionamento é cumprida | Apenas alguns sensores de perceção enviam dados válidos                 |
+| Inverso        | Ocorre o oposto da intenção de funcionamento         | O atuador acelera quando deveria reduzir velocidade                     |
+| Outro / Errado | Ocorre uma substituição ou interpretação incorreta   | A posição, estado ou severidade da avaria é interpretada incorretamente |
+| Cedo           | A ação ocorre antes do momento correto               | O seguidor aplica uma manobra antes da decisão do líder                 |
+| Tarde          | A ação ocorre depois do momento correto              | O estado de avaria do seguidor chega demasiado tarde ao líder           |
+
+#### Análise HAZOP
+
+| Nó/Função | Parâmetro | Palavra-guia | Desvio | Possíveis causas | Possíveis consequências | Salvaguardas existentes/propostas | Recomendações |
+|---|---|---|---|---|---|---|---|
+| Sensores de perceção | Dados de câmaras, LiDAR e sensores ultrassónicos | Não | Sem dados de perceção disponíveis | Falha de sensor, câmara obstruída, falha do LiDAR, falha de cablagem, falha de entrada na ECU | O veículo pode não detetar obstáculos, limites da via ou veículos próximos | Diagnóstico dos sensores, redundância entre sensores de perceção, deteção por timeout | Adicionar monitorização do estado dos sensores e mudar para modo degradado quando os dados de perceção não estiverem disponíveis |
+| Processamento de perceção | Objetos / limites da via detetados | Errado | Obstáculos ou limites da via são detetados incorretamente | Mau tempo, ruído nos sensores, erro de calibração, falha no algoritmo de perceção | Decisão incorreta de trajetória, distância insegura entre veículos, possível colisão | Verificação cruzada entre câmara, LiDAR e sensores ultrassónicos; verificações de plausibilidade | Exigir validação multi-sensor antes de usar dados de perceção em decisões de controlo                                            |
+| Localização | Posição do veículo | Errado | A posição do veículo é estimada incorretamente | Erro de GPS, perda de sinal, inconsistência com o mapa, falha no algoritmo de localização | Seguimento incorreto da trajetória ou estimativa incorreta da posição do veículo no platoon | Validação do GPS, comparação com velocidade das rodas, estimação de confiança | Adicionar monitorização da confiança da posição e estratégia alternativa de localização |
+| Sensores de movimento | Velocidade / ângulo de direção | Errado | O estado de movimento do veículo é estimado incorretamente | Falha no sensor de velocidade das rodas, falha no sensor de direção, erro de calibração, leituras desatualizadas | O VC pode calcular comandos inseguros de aceleração, travagem ou direção | Verificações de gama, verificação de timestamps, verificações de plausibilidade | Comparar dados de movimento com valores anteriores e rejeitar medições inconsistentes |
+| Manutenção preditiva | Estado de saúde do veículo | Não | A avaria não é detetada | Falha de software no PredMaint, falta de dados de diagnóstico, falha de sensor | O veículo continua a operar com uma falha não detetada | Monitorização de diagnóstico, verificações periódicas de saúde, watchdog | Adicionar verificações obrigatórias para pressão dos pneus, temperatura do motor e estado dos travões |
+| Manutenção preditiva | Severidade da avaria | Errado | Avaria crítica classificada como não crítica | Limiar incorreto, falha no algoritmo, dados desatualizados, entrada incorreta de sensores | O platoon pode continuar a operar quando deveria parar | Limiares de severidade, verificação de frescura dos dados, regras de validação | Definir regras conservadoras de classificação de severidade para dados incertos ou inconsistentes |
+| Comunicação seguidor-líder | Tempo da mensagem de estado | Tarde | O estado de avaria do seguidor chega demasiado tarde ao líder | Atraso na rede, perda de pacotes, congestionamento de comunicação, sobrecarga da ECU | O líder atualiza o estado do platoon tarde demais e pode atrasar a decisão de paragem | Timestamps nas mensagens, timeout de comunicação, mensagens prioritárias | Definir um atraso máximo aceitável para mensagens de avaria                                                                      |
+| Comunicação seguidor-líder | Mensagem de estado | Não | A mensagem de estado do seguidor não é recebida pelo líder    | Falha de comunicação, falha da antena, perda de pacotes, falha da ECU de comunicação | O líder fica com uma visão incompleta do platoon e pode não reagir à avaria do seguidor | Mensagens heartbeat, deteção por timeout, retransmissão | Ativar modo degradado se o estado de um seguidor estiver ausente durante um período definido |
+| Gestão do platoon | Visão do estado do platoon | Errado | O líder mantém uma visão incorreta do platoon | Dados desatualizados, ID de veículo incorreto, erro de sincronização, mensagem corrompida | O líder pode tomar uma decisão insegura ao nível do platoon | Validação de timestamps, verificação de IDs dos veículos, verificações de consistência | Forçar atualizações sincronizadas do estado do platoon e descartar mensagens desatualizadas |
+| Controlo do veículo / atuadores | Comando de paragem / controlo | Não | O comando de paragem ou controlo não é executado | Falha no VC, falha na ECU do atuador, falha de interface, falha na direção, travagem ou powertrain | O veículo ou o platoon pode não conseguir parar após uma avaria crítica | Feedback dos atuadores, watchdog, confirmação de comandos | Exigir confirmação da execução dos comandos pelos atuadores e entrar em modo fail-safe se a execução falhar |

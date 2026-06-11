@@ -1,0 +1,67 @@
+@startuml
+
+title Diagrama de Atividades — VEVCA Platoon
+
+|Seguidor - Sensores|
+start
+:Recolher dados de câmara, LiDAR e ultrassons;
+:Recolher dados de GPS, velocidade e direção;
+:Recolher dados de pressão, temperatura e travões;
+
+|Seguidor - PredMaint|
+:Avaliar estado do veículo;
+:Classificar estado: normal / aviso / crítico;
+
+if (Estado crítico ou aviso?) then (sim)
+
+  |Seguidor - COMM|
+  :Enviar estado ao veículo líder;
+
+  |Líder - COMM|
+  :Receber estado do seguidor;
+
+  |Líder - PlatMgmt|
+  :Atualizar visão do platoon;
+  :Avaliar impacto no platoon;
+
+  if (Condição crítica?) then (sim)
+
+    :Determinar manobra segura;
+
+    |Líder - VC|
+    :Executar manobra nos próprios atuadores;
+
+    |Líder - COMM|
+    :Enviar comando de manobra aos seguidores;
+
+    |Seguidor - COMM|
+    :Receber comando de manobra;
+
+    |Seguidor - VC|
+    :Executar manobra localmente;
+
+    |Seguidor - Sensores|
+    :Platoon parado em segurança;
+    stop
+
+  else (aviso)
+
+    |Líder - VC|
+    :Manter operação com monitorização reforçada;
+
+  endif
+
+else (normal)
+
+  |Seguidor - VC|
+  :Calcular rota via NAV;
+  :Tomar decisões de controlo;
+  :Enviar comandos para atuadores;
+
+endif
+
+|Seguidor - Sensores|
+:Continuar recolha de dados;
+-> loop;
+
+@enduml
