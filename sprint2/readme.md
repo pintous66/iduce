@@ -102,9 +102,9 @@ Para visualização do planeamento deste sprint, apresentamos o seguinte diagram
 | PredMaint | Estado de saúde (aviso/crítico) | PlatMgmt (líder) |
 | COMM (seguidor) | Mensagem de estado V2V | COMM (líder) |
 | COMM (líder) | Estado recebido dos seguidores | PlatMgmt |
-| PlatMgmt | Decisão de manobra segura | VC (líder) |
-| VC (líder) | Comando de manobra a difundir | COMM (líder) |
-| COMM (líder) | Comando de manobra V2V | COMM (seguidor) |
+| PlatMgmt | Decisão de manobra | VC (líder) |
+| VC (líder) | Comando de manobra | COMM (líder) |
+| COMM (líder) | Comando de manobra para os seguidores | COMM (seguidor) |
 | COMM (seguidor) | Comando de manobra recebido | VC (seguidor) |
 | VC | Comandos de direção, travagem, powertrain | Atuadores |
 
