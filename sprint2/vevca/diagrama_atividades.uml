@@ -1,67 +1,73 @@
 @startuml
 
-title Diagrama de Atividades — VEVCA Platoon
+title Platoon
 
 |Seguidor - Sensores|
 start
-:Recolher dados de câmara, LiDAR e ultrassons;
-:Recolher dados de GPS, velocidade e direção;
-:Recolher dados de pressão, temperatura e travões;
 
-|Seguidor - PredMaint|
-:Avaliar estado do veículo;
-:Classificar estado: normal / aviso / crítico;
+repeat
+  :Recolher dados de câmara, LiDAR e ultrassons;
+  :Recolher dados de GPS, velocidade e direção;
+  :Recolher dados de pressão, temperatura e travões;
 
-if (Estado crítico ou aviso?) then (sim)
+  |Seguidor - PredMaint|
+  :Avaliar estado do veículo;
+  :Classificar estado: normal / aviso / crítico;
 
-  |Seguidor - COMM|
-  :Enviar estado ao veículo líder;
-
-  |Líder - COMM|
-  :Receber estado do seguidor;
-
-  |Líder - PlatMgmt|
-  :Atualizar visão do platoon;
-  :Avaliar impacto no platoon;
-
-  if (Condição crítica?) then (sim)
-
-    :Determinar manobra segura;
-
-    |Líder - VC|
-    :Executar manobra nos próprios atuadores;
-
-    |Líder - COMM|
-    :Enviar comando de manobra aos seguidores;
+  if (Estado crítico ou aviso?) then (sim)
 
     |Seguidor - COMM|
-    :Receber comando de manobra;
+    :Enviar estado ao veículo líder;
+
+    |Líder - COMM|
+    :Receber estado do seguidor;
+
+    |Líder - PlatMgmt|
+    :Atualizar visão do platoon;
+    :Avaliar impacto no platoon;
+
+    if (Condição crítica?) then (sim)
+
+      :Determinar procedimento de paragem;
+
+      |Líder - VC|
+      :Enviar comandos de paragem aos atuadores do líder;
+
+      |Líder - COMM|
+      :Enviar comando de paragem aos seguidores;
+
+      |Seguidor - COMM|
+      :Receber comando de paragem;
+
+      |Seguidor - VC|
+      :Enviar comandos de paragem aos atuadores do seguidor;
+
+      |Seguidor - Sensores|
+      :Platoon parado em segurança;
+      stop
+
+    else (aviso)
+
+      |Seguidor - VC|
+      :Calcular rota via NAV;
+      :Tomar decisões de controlo;
+      :Enviar comandos para atuadores;
+
+    endif
+
+  else (normal)
 
     |Seguidor - VC|
-    :Executar manobra localmente;
-
-    |Seguidor - Sensores|
-    :Platoon parado em segurança;
-    stop
-
-  else (aviso)
-
-    |Líder - VC|
-    :Manter operação com monitorização reforçada;
+    :Calcular rota via NAV;
+    :Tomar decisões de controlo;
+    :Enviar comandos para atuadores;
 
   endif
 
-else (normal)
+  |Seguidor - Sensores|
 
-  |Seguidor - VC|
-  :Calcular rota via NAV;
-  :Tomar decisões de controlo;
-  :Enviar comandos para atuadores;
+repeat while (Operação ativa?)
 
-endif
-
-|Seguidor - Sensores|
-:Continuar recolha de dados;
--> loop;
+stop
 
 @enduml
