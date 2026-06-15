@@ -40,3 +40,14 @@ A grande vitória deste sprint, contudo, foi a evolução na dinâmica da equipa
 ---
 
 ## Sprint 3 - PMDEV - Planeamento
+
+VEVCA 21% - Using the result of the HAZOP procedure, perform a FMEA and then FTA
+SYOSY 36% - Pseudocode/configurations/guidelines for setup and operation of the envisioned communications system
+RTOPR 36% - Pseudocode/configurations/guidelines for the setup and operation of the envisioned real-time operating system support
+PMDEV 7% - Project management report (reporting of Period 3)
+
+O Sprint 3 tem como foco a concretização dos resultados obtidos no Sprint 2, com especial ênfase na análise de segurança e na operacionalização do sistema. A primeira etapa será a realização da Análise de Modos de Falha e Efeitos (FMEA), utilizando os resultados da análise HAZOP para identificar e classificar os modos de falha potenciais, bem como as suas consequências. Esta análise será complementada por uma Árvore de Falhas (FTA), que permitirá visualizar as relações entre os diferentes modos de falha e identificar os pontos críticos do sistema. Será também realizado o pseudocódigo e a configuração para a operacionalização do sistema de comunicações, garantindo que as soluções propostas no Sprint 2 são implementáveis e eficazes. Paralelamente, será desenvolvido o pseudocódigo e as diretrizes para a configuração do RTOS, assegurando que o sistema é capaz de suportar as tarefas identificadas e os mecanismos de sincronização definidos. O sprint culminará com a elaboração de um relatório detalhado de progresso, que documentará os resultados alcançados.
+
+Para visualização do planeamento deste sprint, apresentamos o seguinte diagrama de Gantt:
+![Gantt](planningsprint3.png)
+**Legenda: Laranja: Rodrigo Botelho | Amarelo: Martim Botelho | Verde: Rodrigo Pinto | Azul: Todos**
