@@ -2,6 +2,10 @@
 
 A arquitetura do sistema exige que as restrições temporais (*deadlines*) sejam estritamente cumpridas para garantir a segurança do pelotão. O requisito fundamental da aplicação estabelece que a tomada de decisão a curto prazo do Controlo do Veículo (VC) opera num intervalo de **0,1 s a 5 s**. Consequentemente, o sistema deve garantir uma **latência end-to-end máxima inferior a 100 ms (0,1 s)** para ações de resposta imediata ou manobras críticas de emergência (ex.: encostar o pelotão à berma perante uma avaria detetada).
 
+### Ajustes e feedback do sprint 1
+
+Em resposta ao feedback recebido no primeiro sprint, a arquitetura de comunicação inter-veículo (V2V) foi profundamente reestruturada para eliminar o ponto único de falha (Single Point of Failure) introduzido pela dependência de um Broker MQTT centralizado no veículo líder. Para satisfazer os rigorosos requisitos de segurança e tempo real críticos, a coordenação do pelotão transitou para a middleware descentralizada DDS (Data Distribution Service) operando sobre 5G PC5 Sidelink, tirando agora partido de políticas estritas de QoS (como Liveliness e Deadlines) e substituindo o overhead do formato JSON por uma serialização binária previsível. O uso de MQTT e JSON foi assim restrito de forma exclusiva ao canal V2N (Vehicle-to-Network), sendo agora utilizados apenas para o envio assíncrono de telemetria de manutenção preditiva não crítica para a Cloud, separando claramente o domínio de controlo de tempo real do domínio de gestão de retaguarda.
+
 ### 3.7.1 Latência no Domínio Intra-veículo (Caminho Crítico de Decisão)
 
 Para ações imediatas locais, os dados fluem dos sensores para os atuadores através do módulo VC.
