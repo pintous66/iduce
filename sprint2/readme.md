@@ -4,6 +4,17 @@ Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
 
 ## Índice
 
+- [Preâmbulo](#preâmbulo)
+- [1. PMDEV](#1-pmdev)
+- [2. VEVCA](#2-vevca)
+- [3. RTOPR](#3-rtopr)
+- [4. SYOSY](#4-syosy)
+- [5. Referências](#5-referências)
+
+
+    
+
+
 
 ## Preâmbulo
 
@@ -61,10 +72,12 @@ Para visualização do planeamento deste sprint, apresentamos o seguinte diagram
 ![Gantt](pmdev/planningsprint3.png)
 **Legenda: Laranja: Rodrigo Botelho | Amarelo: Martim Botelho | Verde: Rodrigo Pinto | Azul: Todos**
 
+<div style="page-break-after: always"></div>
+
 ## 2. VEVCA
 
 
-### 2.2 Melhorias Sprint 1
+### 2.1 Melhorias Sprint 1
 
 #### Descrição dos componentes
 
@@ -573,7 +586,7 @@ O byte 5 das tramas funciona como um contador de vida. Caso o microcontrolador d
 
 ---
 
-# Referências
+# 5. Referências
 
 **[1]** T. Steinbach, H. Zinner, M. Rost, e K. Wolf, *"Comparing Time-Triggered Ethernet with PEV in an automotive in-vehicle network architecture"*, Proceedings of the IEEE 8th International Workshop on Factory Communication Systems (WFCS), Nancy, França, 2010, pp. 25–28.
 
