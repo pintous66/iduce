@@ -1,6 +1,6 @@
 # Sprint 2 - IDUCE - Platoon Monitoring
 
-Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
+Grupo 1 - Rodrigo Pinto, Rodrigo Botelho, Martim Botelho
 
 ## Índice
 
