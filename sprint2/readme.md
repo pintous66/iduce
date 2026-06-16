@@ -11,17 +11,11 @@ Grupo 1 - Rodrigo Pinto, Rodrigo Bolelho, Martim Botelho
 - [4. SYOSY](#4-syosy)
 - [5. Referências](#5-referências)
 
-
-    
-
-
-
 ## Preâmbulo
 
-O Platoon Monitoring é um sistema de monitorização para veículos autónomos em platoon. O veículo líder mantém uma visão atualizada do estado de todos os veículos e, ao identificar uma potencial avaria, coordena a manobra de paragem segura na berma da estrada. Cada veículo é composto por sensores, atuadores e um conjunto de módulos de controlo (VC, NAV, PredMaint, PlatMgmt e COMM) que comunicam entre si e com os restantes veículos do platoon.
+O Platoon Monitoring é um sistema de monitorização para veículos autónomos em platoon. O veículo líder mantém uma visão atualizada do estado de todos os veículos e, ao identificar uma potencial avaria, coordena a manobra de paragem na berma da estrada. Cada veículo é composto por sensores, atuadores e um conjunto de módulos de controlo (VC, NAV, PredMaint, PlatMgmt e COMM) que comunicam entre si e com os restantes veículos do platoon.
 
-
-## 1. PMDEV 
+## 1. PMDEV
 
 ### 1.1 Sprint 1 - Retrospectiva
 
@@ -37,7 +31,7 @@ O Sprint 1 estabeleceu as bases tecnológicas para o sistema de monitorização 
 
 ---
 
-### 1.2 Sprint 2 - Planeamento 
+### 1.2 Sprint 2 - Planeamento
 
 O Sprint 2 arranca com um objetivo prioritário: o reajuste das três componentes principais do projeto (Arquitetura, RTOS e Comunicações). Tendo em conta as aprendizagens do Sprint 1, as iterações planeadas para a arquitetura exigirão uma reavaliação dos seus impactos no RTOS e nas tecnologias de comunicação. Este processo, a realizar logo no início do sprint, é fundamental para orientar as decisões posteriores e assegurar que a evolução do design do sistema se mantém coerente, robusta e alinhada com os objetivos globais.
 
@@ -226,6 +220,7 @@ Com base nos desvios identificados e nas recomendações definidas, alguns requi
 ### 3.1 Melhoramentos e Correções do Sprint 1
 
 Na sequência da revisão dos resultados do Sprint 1, esta secção apresenta uma análise comparativa aprofundada dos Sistemas Operativos de Tempo Real (RTOS) avaliados para o sistema. O objetivo é fundamentar de forma rigorosa as classificações atribuídas, com especial foco nas garantias de determinismo temporal de cada tecnologia, suportando as decisões em especificações técnicas e literatura científica.
+
 #### Tabela Comparativa de RTOS
 
 | Critério | FreeRTOS | AUTOSAR OS | QNX Neutrino |
@@ -293,7 +288,6 @@ Este mecanismo permite:
 - Garantir o cumprimento dos *deadlines* das tarefas críticas.
 
 Esta funcionalidade constitui uma das principais razões para a utilização do AUTOSAR OS em sistemas automóveis com requisitos de segurança rigorosos.[7]
-
 
 ---
 
@@ -372,7 +366,6 @@ Por permitir operações concorrentes de leitura e escrita sobre dados complexos
 **Consumidores:**
 
 * `Task_PredMaint_Leader` - consulta os dados para executar algoritmos de manutenção preditiva e deteção de anomalias.
-
 
 ---
 
@@ -471,7 +464,6 @@ Esta tarefa recolhe e envia periodicamente:
 
 Desta forma, a arquitetura implementa um fluxo de informação hierárquico, no qual o líder distribui comandos operacionais e os seguidores reportam continuamente o seu estado, garantindo consistência, previsibilidade temporal e suporte à manutenção preditiva.
 
-
 ---
 
 ### 3.4 Propriedades de Escalonamento
@@ -479,7 +471,6 @@ Desta forma, a arquitetura implementa um fluxo de informação hierárquico, no 
 O sistema utilizará um escalonamento preemptivo baseado em prioridades fixas, assumindo o algoritmo Rate Monotonic (RM), onde tarefas com menores períodos recebem maiores prioridades.
 
 O planeamento temporal do PlatMgmt foi desenhado para alimentar atempadamente as decisões do VC, cujo ciclo de decisão varia entre 0.1s e 5s.
-
 
 | Tarefa | Prioridade (RM) | Período (Ti) | Execução (Ci) | Prazo (Di) | Recurso Partilhado |
 |--------|----------------|--------------|---------------|------------|---------------------|
@@ -498,7 +489,6 @@ O planeamento temporal do PlatMgmt foi desenhado para alimentar atempadamente as
 
 ---
 
-
 ### 3.5 Considerações sobre a Arquitetura de Hardware (Multi-Core)
 
 É fundamental notar que esta análise de escalonabilidade assume a utilização de um processador de, pelo menos, dois núcleos (dual-core) na ECU. Nesta arquitetura, o Controlo do Veículo (VC) e a Gestão do Pelotão (PlatMgmt) partilham a mesma ECU, mas cada módulo é alocado a um núcleo dedicado (Core Affinity).  
@@ -507,7 +497,7 @@ Se ambos os módulos partilhassem o mesmo núcleo singular, a adição das taref
 
 Uma vez que a especificação detalhada e o escalonamento do taskset de VC estão fora do âmbito (out of scope) desta fase do projeto, a adoção da premissa de uma arquitetura dual-core assegura que o sistema se mantém matematicamente escalonável e garante um isolamento de desempenho robusto entre a atuação física do veículo e a coordenação do pelotão.
 
-## 4 SYOSY 
+## 4 SYOSY
 
 A arquitetura do sistema exige que as restrições temporais (*deadlines*) sejam estritamente cumpridas para garantir a segurança do pelotão. O requisito fundamental da aplicação estabelece que a tomada de decisão a curto prazo do Controlo do Veículo (VC) opera num intervalo de **0,1 s a 5 s**. Consequentemente, o sistema deve garantir uma **latência end-to-end máxima inferior a 100 ms (0,1 s)** para ações de resposta imediata ou manobras críticas de emergência (ex.: encostar o pelotão à berma perante uma avaria detetada).
 
