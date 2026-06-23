@@ -1,0 +1,30 @@
+flowchart TD
+    H09["[H-09] Visão incorreta do platoon"]
+    AND09{{AND}}
+    H09 --> AND09
+    A09["[A09] Líder mantém visão incorreta do platoon"]
+    B09["[B09] Visão incorreta é aceite como válida"]
+    AND09 --> A09
+    AND09 --> B09
+    OR09A{{OR}}
+    A09 --> OR09A
+    A091["[A091] Dados desatualizados"]
+    A092["[A092] Dados atribuídos ao veículo errado"]
+    A093["[A093] Erro de sincronização"]
+    A094["[A094] Mensagem corrompida"]
+    OR09A --> A091
+    OR09A --> A092
+    OR09A --> A093
+    OR09A --> A094
+    OR09B{{OR}}
+    B09 --> OR09B
+    B091["[B091] Timestamps não são verificados"]
+    B092["[B092] Origem das mensagens não é validada"]
+    B093["[B093] Coerência entre estados dos veículos não é analisada"]
+    B094["[B094] Mensagens antigas não são rejeitadas"]
+    B095["[B095] Mensagens corrompidas não são rejeitadas"]
+    OR09B --> B091
+    OR09B --> B092
+    OR09B --> B093
+    OR09B --> B094
+    OR09B --> B095

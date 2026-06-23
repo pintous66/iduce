@@ -1,0 +1,24 @@
+flowchart TD
+    TE["[TE] Top Event: Operação insegura do platoon"]
+    OR0{{OR}}
+    TE --> OR0
+    H01["[H-01] Perda de dados de perceção não mitigada"]
+    H02["[H-02] Perceção incorreta não mitigada"]
+    H03["[H-03] Localização incorreta não mitigada"]
+    H04["[H-04] Estado de movimento incorreto não mitigado"]
+    H05["[H-05] Avaria do veículo não detetada"]
+    H06["[H-06] Avaria crítica classificada como não crítica"]
+    H07["[H-07] Estado de avaria chega tarde ao líder"]
+    H08["[H-08] Mensagem de estado não recebida pelo líder"]
+    H09["[H-09] Visão incorreta do platoon"]
+    H10["[H-10] Comando de paragem ou controlo não executado"]
+    OR0 --> H01
+    OR0 --> H02
+    OR0 --> H03
+    OR0 --> H04
+    OR0 --> H05
+    OR0 --> H06
+    OR0 --> H07
+    OR0 --> H08
+    OR0 --> H09
+    OR0 --> H10

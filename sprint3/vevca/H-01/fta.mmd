@@ -1,0 +1,30 @@
+flowchart TD
+    H01["[H-01] Perda de dados de perceção não mitigada"]
+    AND01{{AND}}
+    H01 --> AND01
+    A01["[A01] Sem dados de perceção disponíveis"]
+    B01["[B01] Sistema não impede decisões baseadas nesses dados"]
+    AND01 --> A01
+    AND01 --> B01
+    OR01A{{OR}}
+    A01 --> OR01A
+    A011["[A011] Falha de sensor"]
+    A012["[A012] Câmara obstruída"]
+    A013["[A013] Falha do LiDAR"]
+    A014["[A014] Falha de cablagem"]
+    A015["[A015] Falha de entrada na ECU"]
+    OR01A --> A011
+    OR01A --> A012
+    OR01A --> A013
+    OR01A --> A014
+    OR01A --> A015
+    OR01B{{OR}}
+    B01 --> OR01B
+    B011["[B011] Verificação automática dos sensores falha"]
+    B012["[B012] Ausência de dados não é detetada"]
+    B013["[B013] VC não é avisado"]
+    B014["[B014] Decisões baseadas nesses dados não são bloqueadas"]
+    OR01B --> B011
+    OR01B --> B012
+    OR01B --> B013
+    OR01B --> B014

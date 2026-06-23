@@ -1,0 +1,30 @@
+flowchart TD
+    H08["[H-08] Mensagem de estado não recebida pelo líder"]
+    AND08{{AND}}
+    H08 --> AND08
+    A08["[A08] Mensagem de estado do seguidor não é recebida"]
+    B08["[B08] Perda de comunicação não é mitigada"]
+    AND08 --> A08
+    AND08 --> B08
+    OR08A{{OR}}
+    A08 --> OR08A
+    A081["[A081] Falha de comunicação"]
+    A082["[A082] Falha da antena"]
+    A083["[A083] Perda de pacotes"]
+    A084["[A084] Falha da ECU de comunicação"]
+    OR08A --> A081
+    OR08A --> A082
+    OR08A --> A083
+    OR08A --> A084
+    OR08B{{OR}}
+    B08 --> OR08B
+    B081["[B081] Mensagens periódicas de presença falham"]
+    B082["[B082] ACK não é recebido ou processado"]
+    B083["[B083] Reenvio de mensagens críticas falha"]
+    B084["[B084] Seguidor não é marcado como não fiável"]
+    B085["[B085] Estado do platoon não é atualizado"]
+    OR08B --> B081
+    OR08B --> B082
+    OR08B --> B083
+    OR08B --> B084
+    OR08B --> B085

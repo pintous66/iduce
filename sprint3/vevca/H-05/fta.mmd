@@ -1,0 +1,28 @@
+flowchart TD
+    H05["[H-05] Avaria do veículo não detetada"]
+    AND05{{AND}}
+    H05 --> AND05
+    A05["[A05] Existe uma avaria no veículo"]
+    B05["[B05] PredMaint não deteta a avaria"]
+    AND05 --> A05
+    AND05 --> B05
+    OR05A{{OR}}
+    A05 --> OR05A
+    A051["[A051] Problema na pressão dos pneus"]
+    A052["[A052] Temperatura anormal do motor"]
+    A053["[A053] Problema no estado dos travões"]
+    A054["[A054] Falha física do veículo"]
+    OR05A --> A051
+    OR05A --> A052
+    OR05A --> A053
+    OR05A --> A054
+    OR05B{{OR}}
+    B05 --> OR05B
+    B051["[B051] Falha no PredMaint"]
+    B052["[B052] Falta de dados de diagnóstico"]
+    B053["[B053] Falha de sensor"]
+    B054["[B054] Verificações periódicas não detetam a falha"]
+    OR05B --> B051
+    OR05B --> B052
+    OR05B --> B053
+    OR05B --> B054

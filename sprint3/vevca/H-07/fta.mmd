@@ -1,0 +1,28 @@
+flowchart TD
+    H07["[H-07] Estado de avaria chega tarde ao líder"]
+    AND07{{AND}}
+    H07 --> AND07
+    A07["[A07] Estado de avaria do seguidor chega demasiado tarde"]
+    B07["[B07] Atraso não é detetado ou tratado"]
+    AND07 --> A07
+    AND07 --> B07
+    OR07A{{OR}}
+    A07 --> OR07A
+    A071["[A071] Atraso na rede"]
+    A072["[A072] Perda de pacotes"]
+    A073["[A073] Congestionamento de comunicação"]
+    A074["[A074] Sobrecarga da ECU"]
+    OR07A --> A071
+    OR07A --> A072
+    OR07A --> A073
+    OR07A --> A074
+    OR07B{{OR}}
+    B07 --> OR07B
+    B071["[B071] Timestamps nas mensagens não são verificados"]
+    B072["[B072] Atraso não é detetado"]
+    B073["[B073] Tempo máximo de receção não está definido"]
+    B074["[B074] Líder não assume perda de informação"]
+    OR07B --> B071
+    OR07B --> B072
+    OR07B --> B073
+    OR07B --> B074

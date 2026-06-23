@@ -1,0 +1,28 @@
+flowchart TD
+    H03["[H-03] Localização incorreta não mitigada"]
+    AND03{{AND}}
+    H03 --> AND03
+    A03["[A03] Posição do veículo estimada incorretamente"]
+    B03["[B03] Erro de localização não é compensado"]
+    AND03 --> A03
+    AND03 --> B03
+    OR03A{{OR}}
+    A03 --> OR03A
+    A031["[A031] Erro de GPS"]
+    A032["[A032] Perda de sinal GPS"]
+    A033["[A033] Inconsistência com o mapa"]
+    A034["[A034] Falha no algoritmo de localização"]
+    OR03A --> A031
+    OR03A --> A032
+    OR03A --> A033
+    OR03A --> A034
+    OR03B{{OR}}
+    B03 --> OR03B
+    B031["[B031] Comparação entre GPS e velocidade das rodas falha"]
+    B032["[B032] Comparação com dados de movimento falha"]
+    B033["[B033] Dados de movimento recentes não são usados"]
+    B034["[B034] PlatMgmt não é avisado da posição não fiável"]
+    OR03B --> B031
+    OR03B --> B032
+    OR03B --> B033
+    OR03B --> B034

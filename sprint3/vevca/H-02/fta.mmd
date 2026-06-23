@@ -1,0 +1,28 @@
+flowchart TD
+    H02["[H-02] Perceção incorreta não mitigada"]
+    AND02{{AND}}
+    H02 --> AND02
+    A02["[A02] Obstáculos ou limites da via detetados incorretamente"]
+    B02["[B02] Informação incorreta é aceite pelo VC"]
+    AND02 --> A02
+    AND02 --> B02
+    OR02A{{OR}}
+    A02 --> OR02A
+    A021["[A021] Mau tempo"]
+    A022["[A022] Ruído nos sensores"]
+    A023["[A023] Erro de calibração"]
+    A024["[A024] Falha no algoritmo de perceção"]
+    OR02A --> A021
+    OR02A --> A022
+    OR02A --> A023
+    OR02A --> A024
+    OR02B{{OR}}
+    B02 --> OR02B
+    B021["[B021] Comparação entre câmara, LiDAR e ultrassons falha"]
+    B022["[B022] Objeto não é confirmado por mais do que um sensor"]
+    B023["[B023] Limite da via não é confirmado por mais do que um sensor"]
+    B024["[B024] Informação incorreta é enviada ao VC"]
+    OR02B --> B021
+    OR02B --> B022
+    OR02B --> B023
+    OR02B --> B024

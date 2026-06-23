@@ -1,0 +1,28 @@
+flowchart TD
+    H04["[H-04] Estado de movimento incorreto não mitigado"]
+    AND04{{AND}}
+    H04 --> AND04
+    A04["[A04] Estado de movimento estimado incorretamente"]
+    B04["[B04] Medições incorretas são aceites pelo sistema"]
+    AND04 --> A04
+    AND04 --> B04
+    OR04A{{OR}}
+    A04 --> OR04A
+    A041["[A041] Falha no sensor de velocidade das rodas"]
+    A042["[A042] Falha no sensor de direção"]
+    A043["[A043] Erro de calibração"]
+    A044["[A044] Leituras desatualizadas"]
+    OR04A --> A041
+    OR04A --> A042
+    OR04A --> A043
+    OR04A --> A044
+    OR04B{{OR}}
+    B04 --> OR04B
+    B041["[B041] Verificação de limites aceitáveis falha"]
+    B042["[B042] Timestamps não são verificados"]
+    B043["[B043] Comparação com leituras anteriores falha"]
+    B044["[B044] Medições incoerentes não são rejeitadas"]
+    OR04B --> B041
+    OR04B --> B042
+    OR04B --> B043
+    OR04B --> B044

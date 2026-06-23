@@ -1,0 +1,32 @@
+flowchart TD
+    H10["[H-10] Comando de paragem ou controlo não executado"]
+    AND10{{AND}}
+    H10 --> AND10
+    A10["[A10] Comando de paragem ou controlo não é executado"]
+    B10["[B10] Falha de execução não é recuperada"]
+    AND10 --> A10
+    AND10 --> B10
+    OR10A{{OR}}
+    A10 --> OR10A
+    A101["[A101] Falha no VC"]
+    A102["[A102] Falha na ECU do atuador"]
+    A103["[A103] Falha de interface"]
+    A104["[A104] Falha na direção"]
+    A105["[A105] Falha na travagem"]
+    A106["[A106] Falha no powertrain"]
+    OR10A --> A101
+    OR10A --> A102
+    OR10A --> A103
+    OR10A --> A104
+    OR10A --> A105
+    OR10A --> A106
+    OR10B{{OR}}
+    B10 --> OR10B
+    B101["[B101] Confirmação dos atuadores não é recebida"]
+    B102["[B102] Feedback dos atuadores não é validado"]
+    B103["[B103] Sistema não repete o comando"]
+    B104["[B104] Líder não é alertado"]
+    OR10B --> B101
+    OR10B --> B102
+    OR10B --> B103
+    OR10B --> B104

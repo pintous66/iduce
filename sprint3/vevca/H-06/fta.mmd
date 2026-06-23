@@ -1,0 +1,30 @@
+flowchart TD
+    H06["[H-06] Avaria crítica classificada como não crítica"]
+    AND06{{AND}}
+    H06 --> AND06
+    A06["[A06] Existe uma avaria crítica"]
+    B06["[B06] Avaria crítica é classificada como não crítica"]
+    C06["[C06] Reação segura não é ativada"]
+    AND06 --> A06
+    AND06 --> B06
+    AND06 --> C06
+    OR06B{{OR}}
+    B06 --> OR06B
+    B061["[B061] Regra de classificação mal definida"]
+    B062["[B062] Falha no algoritmo"]
+    B063["[B063] Dados desatualizados"]
+    B064["[B064] Entrada incorreta de sensores"]
+    OR06B --> B061
+    OR06B --> B062
+    OR06B --> B063
+    OR06B --> B064
+    OR06C{{OR}}
+    C06 --> OR06C
+    C061["[C061] Valores dos sensores não são verificados"]
+    C062["[C062] Dados incertos não são classificados como situação mais grave"]
+    C063["[C063] Líder não é informado"]
+    C064["[C064] Estado do platoon não é atualizado"]
+    OR06C --> C061
+    OR06C --> C062
+    OR06C --> C063
+    OR06C --> C064
