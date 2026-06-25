@@ -1,7 +1,5 @@
 # Sprint 3: Setup e operação do FreeRTOS - Platoon Management (RTOPR)
 
-## 0. Melhoramentos e Correções do Sprint 2
-
 ## 1. Recap técnico para configuração FreeRTOS
 
 ### Arquitetura assumida
@@ -10,6 +8,8 @@
 |---|---|
 | Core 0 | VC |
 | Core 1 | PlatMgmt |
+
+Apesar de neste sprint as tarefas implementadas sejam apenas as do `PlatMgmt`, a configuração considera uma ECU dual-core com FreeRTOS SMP. Desta forma, as tarefas do `PlatMgmt` são atribuídas ao `Core 1` através de core affinity, enquanto o `Core 0` fica disponível para uma futura implementação das tarefas do `VC`.
 
 ### Tarefas do PlatMgmt
 
@@ -49,6 +49,8 @@ Para este projeto, foi considerada a seguinte configuração:
 #define configCHECK_FOR_STACK_OVERFLOW 2 
 #define INCLUDE_vTaskDelayUntil 1 
 #define INCLUDE_xTaskGetTickCount 1
+#define configNUMBER_OF_CORES 2
+#define configUSE_CORE_AFFINITY 1
 
 ```
 
@@ -65,6 +67,10 @@ Para este projeto, foi considerada a seguinte configuração:
 | `configCHECK_FOR_STACK_OVERFLOW`   |      `2` | Ativa a verificação de overflow da stack.                               | Ajuda a detetar falhas de configuração ou consumo excessivo de stack pelas tarefas.                                                    |
 | `INCLUDE_vTaskDelayUntil`          |      `1` | Disponibiliza a função `vTaskDelayUntil()`.                             | Necessário para implementar tarefas periódicas com períodos fixos.                                                                  |
 | `INCLUDE_xTaskGetTickCount`        |      `1` | Disponibiliza a função `xTaskGetTickCount()`.                           | Permite obter o tempo atual do sistema em ticks, útil para controlo temporal e timestamps internos.                                    |
+| `configNUMBER_OF_CORES`             |      `2` | Define o número de cores disponíveis no sistema.                        | Permite configurar o FreeRTOS para suportar a execução em múltiplos núcleos, com tarefas atribuídas a cores específicas.              |
+| `configUSE_CORE_AFFINITY`          |      `1` | Ativa a afinidade de tarefas a cores específicos.                       | Permite associar as tarefas do `PlatMgmt` ao `Core 1`, deixando o `Core 0` disponível para uma futura implementação das tarefas do `VC`.                                   |
+
+Como a alocação dinâmica está desativada, os recursos RTOS são criados estaticamente durante a inicialização, antes do arranque do escalonador.
 
 ## 3. Pseudo-código
 
@@ -74,7 +80,7 @@ Esta secção apresenta o pseudo-código operacional do suporte RTOS previsto pa
 
 ### 3.1 Parâmetros usados no pseudo-código
 
-Antes da criação dos recursos e das tarefas, são definidos os principais parâmetros usados pelo pseudo-código. Estes valores incluem o tamanho das filas, o tamanho das stacks, as prioridades das tarefas, os períodos de execução e alguns timeouts usados durante a operação.
+Antes da criação dos recursos e das tarefas, são definidos os principais parâmetros usados pelo pseudo-código. Estes valores incluem o tamanho das filas, o tamanho das stacks, as prioridades das tarefas, os períodos de execução e os parâmetros de afinidade aos cores usados durante a operação.
 
 Os valores apresentados correspondem a uma configuração inicial coerente com a análise temporal definida anteriormente. Numa implementação real, estes valores deveriam ser validados através de testes de carga, monitorização do uso de stack e análise do comportamento temporal do sistema.
 
@@ -103,10 +109,12 @@ PERIODO_UPDATE_MS = 100
 PERIODO_COMM_TX_MS = 100
 PERIODO_PREDMAINT_MS = 1000
 
-// Timeouts e limites de processamento
-TIMEOUT_MUTEX_MS = 5
-TIMEOUT_ACK_MS = 20
-MAX_MSG_RX_POR_CICLO = 8
+// Cores e máscaras de afinidade
+CORE_VC = 0
+CORE_PLATMGMT = 1
+
+AFFINITY_CORE_0 = 1 << CORE_VC
+AFFINITY_CORE_1 = 1 << CORE_PLATMGMT
 ```
 
 O `TAMANHO_FILA_RX` é maior do que o `TAMANHO_FILA_TX` porque a receção de mensagens V2V pode sofrer pequenos picos de tráfego ou variações temporais causadas pela rede. Assim, a fila de receção consegue armazenar temporariamente várias mensagens antes de estas serem processadas pela tarefa `Task_PlatMgmt_Update`.
@@ -117,7 +125,9 @@ As stacks das tarefas foram dimensionadas de acordo com a complexidade esperada 
 
 As prioridades seguem a política Rate Monotonic definida anteriormente. Assim, tarefas com menor período recebem maior prioridade. A tarefa `Task_PlatMgmt_COMM_RX`, com período de 50 ms, recebe a prioridade mais elevada, enquanto a tarefa `Task_PredMaint_Leader`, com período de 1000 ms, recebe a prioridade mais baixa.
 
-Os timeouts definidos impedem que uma tarefa fique bloqueada indefinidamente à espera de um mutex ou de uma confirmação de comunicação. O limite `MAX_MSG_RX_POR_CICLO` evita que a tarefa `Task_PlatMgmt_Update` processe demasiadas mensagens no mesmo ciclo, ajudando a manter o tempo de execução dentro do período definido.
+O acesso ao `estadoPlatoon` é feito através de mutexes do FreeRTOS. Como estes mutexes suportam priority inheritance, uma tarefa de menor prioridade que esteja temporariamente a utilizar o mutex pode herdar a prioridade de uma tarefa mais crítica que esteja à espera desse recurso. Para reduzir o impacto temporal do bloqueio, as secções protegidas pelo mutex devem ser curtas, limitando-se à atualização ou cópia do estado partilhado.
+
+Finalmente, as máscaras de afinidade indicam em que core uma tarefa pode executar. Neste caso, `AFFINITY_CORE_0 = 1 << CORE_VC` corresponde ao `Core 0`, enquanto `AFFINITY_CORE_1 = 1 << CORE_PLATMGMT` corresponde ao `Core 1`.
 
 ### 3.2 Inicialização dos Recursos RTOS
 
@@ -138,6 +148,12 @@ bufferMutexEstadoPlatoon
 filaRececao
 filaTransmissao
 mutexEstadoPlatoon
+
+// Handles das tarefas
+handleCommRx
+handleUpdate
+handleCommTx
+handlePredMaint
 
 // Estado global partilhado
 estadoPlatoon
@@ -200,7 +216,7 @@ tcbPredMaint
 
 CriarTarefasRTOS()
 {
-    xTaskCreateStatic(
+    handleCommRx = xTaskCreateStatic(
         Task_PlatMgmt_COMM_RX,
         "COMM_RX",
         STACK_COMM_RX,
@@ -210,7 +226,7 @@ CriarTarefasRTOS()
         &tcbCommRx
     )
 
-    xTaskCreateStatic(
+    handleUpdate = xTaskCreateStatic(
         Task_PlatMgmt_Update,
         "PLAT_UPDATE",
         STACK_PLAT_UPDATE,
@@ -220,7 +236,7 @@ CriarTarefasRTOS()
         &tcbUpdate
     )
 
-    xTaskCreateStatic(
+    handleCommTx = xTaskCreateStatic(
         Task_PlatMgmt_COMM_TX,
         "COMM_TX",
         STACK_COMM_TX,
@@ -230,7 +246,7 @@ CriarTarefasRTOS()
         &tcbCommTx
     )
 
-    xTaskCreateStatic(
+    handlePredMaint = xTaskCreateStatic(
         Task_PredMaint_Leader,
         "PRED_LEADER",
         STACK_PREDMAINT,
@@ -239,6 +255,11 @@ CriarTarefasRTOS()
         stackPredMaint,
         &tcbPredMaint
     )
+
+    vTaskCoreAffinitySet(handleCommRx, AFFINITY_CORE_1)
+    vTaskCoreAffinitySet(handleUpdate, AFFINITY_CORE_1)
+    vTaskCoreAffinitySet(handleCommTx, AFFINITY_CORE_1)
+    vTaskCoreAffinitySet(handlePredMaint, AFFINITY_CORE_1)
 }
 ```
 
@@ -302,18 +323,14 @@ Task_PlatMgmt_Update()
     mensagem
     comandoParagem
     condicaoCritica
-    mensagensProcessadas
 
     enquanto verdadeiro:
 
         vTaskDelayUntil(&ultimoAcordar, pdMS_TO_TICKS(PERIODO_UPDATE_MS))
 
-        mensagensProcessadas = 0
+        enquanto xQueueReceive(filaRececao, &mensagem, 0) == pdPASS:
 
-        enquanto mensagensProcessadas < MAX_MSG_RX_POR_CICLO e
-                 xQueueReceive(filaRececao, &mensagem, 0) == pdPASS:
-
-            se xSemaphoreTake(mutexEstadoPlatoon, pdMS_TO_TICKS(TIMEOUT_MUTEX_MS)) == pdPASS:
+            se xSemaphoreTake(mutexEstadoPlatoon, portMAX_DELAY) == pdPASS:
 
                 se mensagemCoerente(mensagem, estadoPlatoon):
 
@@ -326,23 +343,13 @@ Task_PlatMgmt_Update()
 
                 xSemaphoreGive(mutexEstadoPlatoon)
 
-            senão:
-
-                registarErro("timeout no mutexEstadoPlatoon")
-
-            mensagensProcessadas = mensagensProcessadas + 1
-
         condicaoCritica = falso
 
-        se xSemaphoreTake(mutexEstadoPlatoon, pdMS_TO_TICKS(TIMEOUT_MUTEX_MS)) == pdPASS:
+        se xSemaphoreTake(mutexEstadoPlatoon, portMAX_DELAY) == pdPASS:
 
             condicaoCritica = verificarCondicaoCritica(estadoPlatoon)
 
             xSemaphoreGive(mutexEstadoPlatoon)
-
-        senão:
-
-            registarErro("timeout ao verificar condição crítica")
 
         se condicaoCritica == verdadeiro:
 
@@ -354,7 +361,7 @@ Task_PlatMgmt_Update()
 }
 ```
 
-Esta tarefa lê mensagens da `filaRececao` usando `xQueueReceive()`. O acesso ao `estadoPlatoon` é protegido com `xSemaphoreTake()` e `xSemaphoreGive()`. O processamento de mensagens por ciclo é limitado para evitar que a tarefa ultrapasse o tempo esperado de execução.
+Esta tarefa lê as mensagens disponíveis na `filaRececao` usando `xQueueReceive()`. O acesso ao `estadoPlatoon` é protegido com `xSemaphoreTake()` e `xSemaphoreGive()`. Como a receção da fila é feita sem bloqueio, a tarefa apenas processa mensagens já disponíveis no momento da sua execução periódica.
 
 Quando é detetada uma condição crítica, o comando de paragem é inserido na frente da `filaTransmissao` através de `xQueueSendToFront()`. Isto dá prioridade a mensagens críticas face a mensagens periódicas.
 
@@ -378,14 +385,12 @@ Task_PlatMgmt_COMM_TX()
 
             se mensagem.prioridade == CRITICA:
 
-                se esperarConfirmacao(TIMEOUT_ACK_MS) != CONFIRMADO:
-
-                    retransmitirMensagem(mensagem)
-                    registarAviso("mensagem crítica retransmitida")
+                pedirConfirmacaoRececao(mensagem)
+                gerirReenvioMensagemCritica(mensagem)
 }
 ```
 
-Esta tarefa é a única consumidora da `filaTransmissao`. Isto evita que várias tarefas tentem aceder diretamente à interface de comunicação ao mesmo tempo. As mensagens críticas exigem confirmação de receção e são retransmitidas caso a confirmação não seja recebida dentro do tempo definido.
+Esta tarefa é a única consumidora da `filaTransmissao`. Isto evita que várias tarefas tentem aceder diretamente à interface de comunicação ao mesmo tempo. Quando uma mensagem crítica é enviada, a tarefa solicita confirmação de receção e ativa o mecanismo de reenvio caso a confirmação não seja obtida.
 
 ---
 
@@ -403,16 +408,11 @@ Task_PredMaint_Leader()
 
         vTaskDelayUntil(&ultimoAcordar, pdMS_TO_TICKS(PERIODO_PREDMAINT_MS))
 
-        se xSemaphoreTake(mutexEstadoPlatoon, pdMS_TO_TICKS(TIMEOUT_MUTEX_MS)) == pdPASS:
+        xSemaphoreTake(mutexEstadoPlatoon, portMAX_DELAY)
 
-            copiaEstado = copiarEstadoPlatoon(estadoPlatoon)
+        copiaEstado = copiarEstadoPlatoon(estadoPlatoon)
 
-            xSemaphoreGive(mutexEstadoPlatoon)
-
-        senão:
-
-            registarErro("timeout ao copiar estado do platoon")
-            continuar
+        xSemaphoreGive(mutexEstadoPlatoon)
 
         estadoSaude = avaliarSaudeDoPlatoon(copiaEstado)
 
