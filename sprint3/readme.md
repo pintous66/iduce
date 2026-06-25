@@ -39,6 +39,8 @@ A árvore geral apresenta o Top Event, definido como operação incorreta do pla
 
 Para esta análise, + representa um gate OR e . representa um gate AND. Assim, para a árvore geral:
 
+![FTA geral](./vevca/H-00/FTA_0.png)
+
 Operação incorreta do platoon = H-01 + H-02 + H-03 + H-04 + H-05 + H-06 + H-07 + H-08 + H-09 + H-10
 
 Os minimal cut sets da árvore geral são:
